@@ -6,7 +6,6 @@
 namespace AVR::USB
 {
 	class Endpoint;
-	extern Endpoint *endp0;
 
 	enum class RequestDirection : bool{
 		HostToDevice = false,

@@ -4,6 +4,8 @@
 #include "../usbConfig.hpp"
 #include <util/delay.h>
 
+#include <array>
+
 #include <avr/interrupt/interrupt.hpp>
 #include <avr/interrupt/watchdog.hpp>
 
@@ -18,8 +20,10 @@ volatile uint8_t usbRxLen;
 uint8_t usbRxToken;
 uint8_t usbCurrentTok;
 uint8_t usbInputBufOffset;
+volatile uint8_t usbEndptNo;
 uint8_t *usbTxLenBufs[MAX_ENDPTS];
 
+std::array<USB::Endpoint*, MAX_ENDPTS> Endpoints;
 
 void disconnect()
 {
@@ -55,11 +59,15 @@ void USB::init(USB::Endpoint0 *endpoint0)
 	
 
 	if(endpoint0)
-		endp0 = endpoint0;
+		Endpoints[0] = endpoint0;
 	else
-		endp0 = &_endp0;
+		Endpoints[0] = &_endp0;
 
-	usbTxLenBufs[0] = endp0->buf();
+	usbTxLenBufs[0] = Endpoints[0]->buf();
+	for(uint8_t i = 1; i < MAX_ENDPTS; i++){
+		usbTxLenBufs[i] = nullptr;
+		Endpoints[i] = nullptr;
+	}
 
 	//enable global interrupts
 	AVR::Interrupt::enable();
@@ -81,5 +89,6 @@ void USB::reset()
 
 void __attribute__((interrupt)) handleTransaction()
 {
-
+	USB::Endpoint *endpt = Endpoints[usbEndptNo];
+	if(!endpt) return;
 }

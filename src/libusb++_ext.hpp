@@ -15,5 +15,6 @@ extern "C"{
 	extern uint8_t usbCurrentTok;
 	extern uint8_t usbInputBufOffset;
 
+	extern volatile uint8_t usbEndptNo;
 	extern uint8_t *usbTxLenBufs[MAX_ENDPTS];
 }

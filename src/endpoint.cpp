@@ -3,7 +3,6 @@
 
 using namespace AVR;
 
-USB::Endpoint *USB::endp0{nullptr};
 
 void USB::Endpoint::genPacket(USB::PID pid, uint8_t dataLen)
 {
