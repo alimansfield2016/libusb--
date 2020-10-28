@@ -25,5 +25,9 @@ namespace AVR::USB
 	constexpr AVR::Register8 INT_CFG{USB_INTR_CFG};
 	constexpr AVR::Register8 INT_ENABLE{USB_INTR_ENABLE};
 	constexpr AVR::Register8 INT_PENDING{USB_INTR_PENDING};
+
+	constexpr AVR::BV INT_CFG_SET{ISC20 | ISC21};
+	constexpr AVR::BV INT_ENABLE_MASK{USB_INTR_ENABLE_BIT};
+	constexpr AVR::BV INT_PENDING_MASK{USB_INTR_PENDING_BIT};
 } // namespace AVR::USB
 

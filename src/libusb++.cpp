@@ -27,6 +27,7 @@ std::array<USB::Endpoint*, MAX_ENDPTS> Endpoints;
 
 void disconnect()
 {
+	PORTB &= ~0x02;
 	using namespace USB;
 	//set low
 	PORT &= ~(DMINUS | DPLUS);
@@ -36,6 +37,7 @@ void disconnect()
 
 void connect()
 {
+	PORTB |= 0x02;
 	using namespace USB;
 	//set to input
 	DDR &= ~(DMINUS | DPLUS);
@@ -47,6 +49,11 @@ void USB::init(USB::Endpoint0 *endpoint0)
 {
 	reset();
 	//required pins will now be set.
+
+	//Enable interrupts
+	USB::INT_CFG = USB::INT_CFG_SET;
+	USB::INT_ENABLE = USB::INT_ENABLE_MASK;
+	USB::INT_PENDING = USB::INT_PENDING_MASK;
 
 	//clear global variables
 	usbDeviceAddr = 0;
@@ -71,6 +78,8 @@ void USB::init(USB::Endpoint0 *endpoint0)
 
 	//enable global interrupts
 	AVR::Interrupt::enable();
+	PINB = 0x01;
+	PINB = 0x01;
 }
 
 void USB::reset()
@@ -89,6 +98,8 @@ void USB::reset()
 
 void __attribute__((interrupt)) handleTransaction()
 {
+	USB::PORT |= 0x01;
 	USB::Endpoint *endpt = Endpoints[usbEndptNo];
 	if(!endpt) return;
+	USB::PORT &= ~0x01;
 }
