@@ -13,31 +13,32 @@ using namespace AVR;
 
 uint8_t usbDeviceAddr;
 uint8_t usbNewDeviceAddr;
-uint8_t usbTxBuf[11];
-volatile uint8_t usbTxLen;
-uint8_t usbRxBuf[11];
-volatile uint8_t usbRxLen;
+// uint8_t usbTxBuf[11];
+// volatile uint8_t usbTxLen;
+uint8_t usbRxBuf[USB_BUF_LEN*2];
+uint8_t usbRxLen;
 uint8_t usbRxToken;
 uint8_t usbCurrentTok;
 uint8_t usbInputBufOffset;
 volatile uint8_t usbEndptNo;
 uint8_t *usbTxLenBufs[MAX_ENDPTS];
+bool usbTransactionEnd;
 
 std::array<USB::Endpoint*, MAX_ENDPTS> Endpoints;
 
 void disconnect()
 {
-	PORTB &= ~0x02;
+	PORTB |= 0x02;
 	using namespace USB;
 	//set low
 	PORT &= ~(DMINUS | DPLUS);
 	//set to output
-	DDR |= DMINUS | DPLUS;
+	DDR |= (DMINUS | DPLUS);
 }
 
 void connect()
 {
-	PORTB |= 0x02;
+	PORTB &= ~0x02;
 	using namespace USB;
 	//set to input
 	DDR &= ~(DMINUS | DPLUS);
@@ -61,7 +62,7 @@ void USB::init(USB::Endpoint0 *endpoint0)
 	usbCurrentTok = 0;
 	usbRxToken = 0;
 	usbRxLen = 0;
-	usbTxLen = 0;
+	// usbTxLen = 0;
 	usbInputBufOffset = 0;
 	
 
@@ -78,8 +79,8 @@ void USB::init(USB::Endpoint0 *endpoint0)
 
 	//enable global interrupts
 	AVR::Interrupt::enable();
-	PINB = 0x01;
-	PINB = 0x01;
+	// PORTB |= 0x01;
+	// PORTB &= ~0x01;
 }
 
 void USB::reset()
@@ -87,8 +88,8 @@ void USB::reset()
 	AVR::Interrupt::InterruptHolder hold;
 	
 	disconnect();
-
-	for(uint8_t i = 0; i; ++i){
+	uint8_t i = 0;
+	while(++i){
 		_delay_ms(1);
 		AVR::Watchdog::reset();
 	}
@@ -96,10 +97,35 @@ void USB::reset()
 	connect();
 }
 
-void __attribute__((interrupt)) handleTransaction()
+void handleTransaction()
 {
-	USB::PORT |= 0x01;
-	USB::Endpoint *endpt = Endpoints[usbEndptNo];
+	using namespace USB;
+	Endpoint *endpt = Endpoints[usbEndptNo];
 	if(!endpt) return;
-	USB::PORT &= ~0x01;
+	PORTB ^= 0x02;
+	PID rxToken = static_cast<PID>(usbRxToken);
+	uint8_t *buf = usbRxBuf + USB_BUF_LEN - usbInputBufOffset;
+	if(usbRxLen)
+		switch (rxToken)
+		{
+		case PID::SETUP :
+			endpt->setup(buf, usbRxLen);
+			// endpt->setup(usbRxBuf, usbRxLen);
+			break;
+		case PID::OUT :
+			endpt->out(buf, usbRxLen);
+			break;
+		// case PID::IN :
+		// 	endpt->in();
+		// 	break;
+		
+		default:
+			break;
+		}
+
+	//update endpoint TX Buffers
+	for(auto _endpt : Endpoints)
+		if(_endpt && !_endpt->txLen())_endpt->in();
+	
+	PORTB ^= 0x80;
 }
