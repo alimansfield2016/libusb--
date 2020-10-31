@@ -132,7 +132,7 @@ constexpr DeviceDescriptor PROGMEM deviceDescriptor {
 	0x08, 
 	0x16c0, 
 	0x05dc, 
-	0x0102, 
+	0x0103, 
 	0, 0, 0, 1
 };
 
