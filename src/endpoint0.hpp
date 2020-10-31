@@ -16,6 +16,7 @@ namespace AVR::USB
 			ConfigurationDescriptor,
 		}state;
 		uint8_t stateIdx;
+		uint8_t offset;
 		uint16_t maxLength;
 	public:
 		void setup(uint8_t *rxBuf, uint8_t &rxLen) override;
@@ -23,6 +24,7 @@ namespace AVR::USB
 		void in() override;
 	private:
 		void setDeviceAddr(uint8_t addr);
+		void setConfiguration(uint16_t config);
 		void getDescriptor(DescriptorType type, uint8_t idx);
 
 		void loadDeviceDescriptor();

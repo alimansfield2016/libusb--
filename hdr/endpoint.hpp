@@ -92,6 +92,15 @@ namespace AVR::USB
 		Interrupt = 0b11,
 	};
 
+	class Power{
+		const uint8_t val;
+	public:
+		constexpr Power(uint16_t power) : val{power>>1} {}
+		constexpr operator uint8_t() { return val; }
+	};
+	constexpr Power operator""ma(unsigned long long power) { return Power(power); }
+
+
 	class Endpoint
 	{
 		uint8_t txLenBuf[12];

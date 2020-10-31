@@ -44,7 +44,11 @@ void Endpoint0::setup(uint8_t *rxBuf, uint8_t &rxLen)
 		setDeviceAddr(wValue&0x7F);
 		break;
 	case Request::GetDescriptor:
+		maxLength = wCount;
 		getDescriptor(static_cast<DescriptorType>(wValue>>8), wValue&0xFF);
+		break;
+	case Request::SetConfiguration:
+		setConfiguration(wValue);
 		break;
 	
 	default:
@@ -72,6 +76,9 @@ void Endpoint0::in()
 	case State::DeviceDescriptor :
 		loadDeviceDescriptor();
 		break;
+	case State::ConfigurationDescriptor :
+		loadConfigurationDescriptor();
+		break;
 	
 	default:
 		break;
@@ -82,8 +89,14 @@ void Endpoint0::setDeviceAddr(uint8_t addr)
 {
 	PORTB ^= 0x01;
 	PORTB ^= 0x01;
-	state = State::DEFAULT;
+	resetState();
 	usbNewDeviceAddr = addr;
+	genPacket(getDataPID(), 0);
+}
+
+void Endpoint0::setConfiguration(uint16_t config)
+{
+	resetState();
 	genPacket(getDataPID(), 0);
 }
 
@@ -111,7 +124,7 @@ void Endpoint0::getDescriptor(DescriptorType type, uint8_t idx)
 	}
 }
 
-const DeviceDescriptor PROGMEM deviceDescriptor { 
+constexpr DeviceDescriptor PROGMEM deviceDescriptor { 
 	USB_BCD::USB1_1, 
 	DeviceClass::VendorSpecific, 
 	0xFF, 
@@ -120,7 +133,8 @@ const DeviceDescriptor PROGMEM deviceDescriptor {
 	0x16c0, 
 	0x05dc, 
 	0x0102, 
-	0, 0, 0, 1 };
+	0, 0, 0, 1
+};
 
 void Endpoint0::loadDeviceDescriptor()
 {
@@ -137,7 +151,7 @@ void Endpoint0::loadDeviceDescriptor()
 
 	uint8_t offset = stateIdx++<<3;
 	
-	AVR::pgm_ptr<uint8_t*> p_ptr{&deviceDescriptor.m_ptr};
+	AVR::pgm_ptr<const uint8_t*> p_ptr{&deviceDescriptor.m_ptr};
 	// const uint8_t* const _ptr = *p_ptr;
 	AVR::pgm_ptr<uint8_t> ptr{*p_ptr + offset};
 	if(offset == 0) maxLength = *ptr;
@@ -209,11 +223,68 @@ void Endpoint0::loadDeviceDescriptor()
 	*/
 }
 
+constexpr ConfigurationDescriptor PROGMEM configurationDescriptor {
+	0x12,
+	1,
+	1,
+	0,
+	0x80,
+	100ma,
+};
+
+constexpr InterfaceDescriptor PROGMEM interface0Descriptor {
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
+};
+
+
 void Endpoint0::loadConfigurationDescriptor()
 {
 	//first load configuration descriptor
 	//then load interface descriptors
 	//after each interface descriptor, load relevant endpoint descriptors
+	constexpr AVR::pgm_ptr<const uint8_t*> cd_ptr{&configurationDescriptor.m_ptr};
+	constexpr AVR::pgm_ptr<const uint8_t*> id_ptr{&interface0Descriptor.m_ptr};
+	AVR::pgm_ptr<uint8_t> ptr;
+	uint8_t i = 0;
+
+	switch(stateIdx){
+		case 0:	//configuration descriptor
+			ptr.assign(*cd_ptr + offset);
+			for(; i < 8 && offset+i < 9 && maxLength; i++, ptr++, maxLength--)
+			{
+				txBuf[i] = *ptr;
+			}
+			offset += 8;
+			if(i==8)
+				break;
+			offset = 0;
+			stateIdx++;
+			[[fallthrough]];
+		case 1:	//interface descriptor
+			ptr.assign(*id_ptr + offset);
+			for(; i < 8 && offset+i < 9 && maxLength; i++, ptr++, maxLength--)
+			{
+				txBuf[i] = *ptr;
+			}
+			offset += 8;
+			if(i==8)
+				break;
+			offset = 0;
+			stateIdx++;
+			break;
+		default:
+			stateIdx--;
+			state = State::DEFAULT;
+			break;
+	}
+
+	genPacket(getDataPID(), i);
 
 
 	//foreach interface descriptor
