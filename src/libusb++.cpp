@@ -1,4 +1,8 @@
 #include <libusb++.hpp>
+#include <device.hpp>
+#include <configuration.hpp>
+#include <interface.hpp>
+#include <endpoint.hpp>
 #include "libusb++_ext.hpp"
 #include "endpoint0.hpp"
 #include "../usbConfig.hpp"
@@ -21,10 +25,12 @@ uint8_t usbRxToken;
 uint8_t usbCurrentTok;
 uint8_t usbInputBufOffset;
 volatile uint8_t usbEndptNo;
+
 uint8_t *usbTxLenBufs[MAX_ENDPTS];
 bool usbTransactionEnd;
 
-std::array<USB::Endpoint*, MAX_ENDPTS> Endpoints;
+std::array<USB::EndpointOut*, MAX_ENDPTS> EndpointsOut;
+std::array<USB::EndpointIn*, MAX_ENDPTS> EndpointsIn;
 
 void disconnect()
 {
@@ -66,15 +72,20 @@ void USB::init(USB::Endpoint0 *endpoint0)
 	usbInputBufOffset = 0;
 	
 
-	if(endpoint0)
-		Endpoints[0] = endpoint0;
-	else
-		Endpoints[0] = &_endp0;
+	if(endpoint0){
+		EndpointsIn[0] = endpoint0;
+		EndpointsOut[0] = endpoint0;
+	}
+	else{
+		EndpointsIn[0] = &_endp0;
+		EndpointsOut[0] = &_endp0;
+	}
 
-	usbTxLenBufs[0] = Endpoints[0]->buf();
+	usbTxLenBufs[0] = EndpointsIn[0]->buf();
 	for(uint8_t i = 1; i < MAX_ENDPTS; i++){
 		usbTxLenBufs[i] = nullptr;
-		Endpoints[i] = nullptr;
+		EndpointsIn[i] = nullptr;
+		EndpointsOut[i] = nullptr;
 	}
 
 	//enable global interrupts
@@ -97,23 +108,23 @@ void USB::reset()
 	connect();
 }
 
-void handleTransaction()
+void __vector_transaction()
 {
 	using namespace USB;
-	Endpoint *endpt = Endpoints[usbEndptNo];
+	EndpointOut *endpt = EndpointsOut[usbEndptNo];
 	if(!endpt) return;
-	PORTB ^= 0x02;
+	// PORTB ^= 0x40;
 	PID rxToken = static_cast<PID>(usbRxToken);
 	uint8_t *buf = usbRxBuf + USB_BUF_LEN - usbInputBufOffset;
+	bool setup = false;
 	if(usbRxLen)
 		switch (rxToken)
 		{
 		case PID::SETUP :
-			endpt->setup(buf, usbRxLen);
-			// endpt->setup(usbRxBuf, usbRxLen);
-			break;
+			setup = true;
+			[[fallthrough]];
 		case PID::OUT :
-			endpt->out(buf, usbRxLen);
+			endpt->out(buf, usbRxLen, setup);
 			break;
 		// case PID::IN :
 		// 	endpt->in();
@@ -124,8 +135,8 @@ void handleTransaction()
 		}
 
 	//update endpoint TX Buffers
-	for(auto _endpt : Endpoints)
-		if(_endpt && !_endpt->txLen())_endpt->in();
+	for(auto endptIn : EndpointsIn)
+		if(endptIn && !endptIn->txLen())endptIn->in();
 	
 	PORTB ^= 0x80;
 }

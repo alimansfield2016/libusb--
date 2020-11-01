@@ -28,7 +28,7 @@ OBJ += ${ASM:${SRCDIR}/%.${ASMEXT}=${OBJDIR}/%.${OBJEXT}}
 
 WARNINGS += all pedantic extra shadow no-overflow no-volatile no-unused-variable no-unused-parameter
 STANDARD = c++20
-OPTIMISATION = 3
+OPTIMISATION = s
 DEFINES += __AVR_ATmega644P__ F_CPU=12000000 #ENABLE_INTERRUPTS
 LIBRARIES += atmega644p c c++ 
 WHOLE_LIBRARIES += usb++

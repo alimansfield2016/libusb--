@@ -103,7 +103,7 @@ pop_reti_handle:
 	sts		usbTransactionEnd, YL
 	POP_RETI
 	sei
-	rjmp	handleTransaction
+	rjmp	__vector_transaction
 noHandle:
     POP_RETI                    ;macro call
     reti

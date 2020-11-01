@@ -78,11 +78,11 @@ namespace AVR::USB
 				uint8_t _bNumInterfaces,
 				uint8_t _bConfigurationValue,
 				uint8_t _iConfiguration,
-				uint8_t _bmAttributes,
+				ConfigurationAttributes _bmAttributes,
 				Power _bMaxPower ) : 
 			Descriptor(m_buf),
 			m_buf{
-				static_cast<uint8_t>(9),
+				static_cast<uint8_t>(0x09),
 				static_cast<uint8_t>(DescriptorType::Configuration),
 				static_cast<uint8_t>(_wTotalLength&0xFF),
 				static_cast<uint8_t>(_wTotalLength>>8),
@@ -108,7 +108,7 @@ namespace AVR::USB
 				uint8_t _bInterfaceNumber,
 				uint8_t _bAlternateSetting,
 				uint8_t _bNumEndpoints,
-				uint8_t _bInterfaceClass,
+				InterfaceClass _bInterfaceClass,
 				uint8_t _bInterfaceSubClass,
 				uint8_t _bInterfaceProtocol,
 				uint8_t _iInterface

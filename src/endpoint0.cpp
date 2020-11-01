@@ -56,10 +56,14 @@ void Endpoint0::setup(uint8_t *rxBuf, uint8_t &rxLen)
 	}
 }
 
-void Endpoint0::out(uint8_t *rxBuf, uint8_t &rxLen)
+void Endpoint0::out(uint8_t *rxBuf, uint8_t &rxLen, bool _setup)
 {
 	PORTB ^= 0x20;
 
+	if(_setup) {
+		setup(rxBuf, rxLen);
+		return;
+	}
 
 	rxLen = 0;
 }
@@ -102,6 +106,7 @@ void Endpoint0::setConfiguration(uint16_t config)
 
 void Endpoint0::getDescriptor(DescriptorType type, uint8_t idx)
 {
+	offset = 0;
 	switch (type)
 	{
 	case DescriptorType::Device :
@@ -124,7 +129,7 @@ void Endpoint0::getDescriptor(DescriptorType type, uint8_t idx)
 	}
 }
 
-constexpr DeviceDescriptor PROGMEM deviceDescriptor { 
+constexpr AVR::USB::DeviceDescriptor PROGMEM deviceDescriptor { 
 	USB_BCD::USB1_1, 
 	DeviceClass::VendorSpecific, 
 	0xFF, 
@@ -138,26 +143,13 @@ constexpr DeviceDescriptor PROGMEM deviceDescriptor {
 
 void Endpoint0::loadDeviceDescriptor()
 {
-	// constexpr uint8_t bLength = 18;
-	// constexpr uint8_t bDescriptorType = static_cast<uint8_t>(DescriptorType::Device);
-	// constexpr uint16_t bcdUSB = static_cast<uint16_t>(USB_BCD::USB1_1);
-	// constexpr uint8_t bDeviceClass = static_cast<uint8_t>(DeviceClass::VendorSpecific);
-	// constexpr uint8_t bSubDeviceClass = 0xFF;
-	// constexpr uint16_t idVendor = 0x16c0;
-	// constexpr uint16_t idProduct = 0x05dc;
-	// constexpr uint16_t bcdDevice = 0x0102;
-
-
-
-	uint8_t offset = stateIdx++<<3;
 	
 	AVR::pgm_ptr<const uint8_t*> p_ptr{&deviceDescriptor.m_ptr};
 	// const uint8_t* const _ptr = *p_ptr;
 	AVR::pgm_ptr<uint8_t> ptr{*p_ptr + offset};
-	if(offset == 0) maxLength = *ptr;
 
 	uint8_t i;
-	for(i = 0; (i < 8) && maxLength; i++, --maxLength)
+	for(i = 0; (i < 8) && (offset < 0x12) && maxLength; i++, --maxLength, offset++)
 		{
 			txBuf[i] = *ptr++;
 		}
@@ -223,20 +215,20 @@ void Endpoint0::loadDeviceDescriptor()
 	*/
 }
 
-constexpr ConfigurationDescriptor PROGMEM configurationDescriptor {
+constexpr AVR::USB::ConfigurationDescriptor PROGMEM configurationDescriptor {
 	0x12,
 	1,
 	1,
 	0,
-	0x80,
-	100ma,
+	ConfigurationAttributes::NONE,
+	100_mA,
 };
 
-constexpr InterfaceDescriptor PROGMEM interface0Descriptor {
+constexpr AVR::USB::InterfaceDescriptor PROGMEM interface0Descriptor {
 	0,
 	0,
 	0,
-	0,
+	InterfaceClass::VendorSpecific,
 	0,
 	0,
 	0,
@@ -256,11 +248,8 @@ void Endpoint0::loadConfigurationDescriptor()
 	switch(stateIdx){
 		case 0:	//configuration descriptor
 			ptr.assign(*cd_ptr + offset);
-			for(; i < 8 && offset+i < 9 && maxLength; i++, ptr++, maxLength--)
-			{
+			for(; i < 8 && offset < 9 && maxLength; i++, ptr++, maxLength--, offset++)
 				txBuf[i] = *ptr;
-			}
-			offset += 8;
 			if(i==8)
 				break;
 			offset = 0;
@@ -268,19 +257,13 @@ void Endpoint0::loadConfigurationDescriptor()
 			[[fallthrough]];
 		case 1:	//interface descriptor
 			ptr.assign(*id_ptr + offset);
-			for(; i < 8 && offset+i < 9 && maxLength; i++, ptr++, maxLength--)
-			{
+			for(; i < 8 && offset < 9 && maxLength; i++, ptr++, maxLength--, offset++)
 				txBuf[i] = *ptr;
-			}
-			offset += 8;
 			if(i==8)
 				break;
 			offset = 0;
-			stateIdx++;
-			break;
-		default:
-			stateIdx--;
 			state = State::DEFAULT;
+			stateIdx = 0;
 			break;
 	}
 

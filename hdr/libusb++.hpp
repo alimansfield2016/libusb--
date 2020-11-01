@@ -1,11 +1,16 @@
 #pragma once
 
 #include <stdint.h>
+// #include <avr/memory/pgmspace.hpp>
 
 namespace AVR::USB
 {
-	class Endpoint;
+	class _Endpoint;
 	class Endpoint0;
+
+	class Device;
+	//PROGMEM
+	extern const Device* pDevice;
 
 	/**Allows the user to provide a custom Endpoint Zero.
 	 * It must however inherit from Endpoint0 and use some of its 
@@ -55,4 +60,111 @@ namespace AVR::USB
 		RESERVED = 0xF0,
 	}; // enum class PID
 	
+
+	enum class RequestDirection : bool{
+		HostToDevice = false,
+		DeviceToHost = true,
+	};
+
+	enum class RequestType : uint8_t{
+		Standard = 0,
+		Class = 1,
+		Vendor = 2,
+		RESERVED = 3,
+	};
+
+	enum class RequestRecipient : uint8_t{
+		Device = 0,
+		Interface = 1,
+		Endpoint = 2,
+		Other = 3,
+	};
+
+	enum class DescriptorType : uint8_t{
+		Device = 1,
+		Configuration = 2,
+		String = 3,
+		Interface = 4,
+		Endpoint = 5,
+		DeviceQualifier = 6,
+		OtherSpeedConfiguration = 7,
+		InterfacePower = 8,
+		OnTheGo = 9,
+	};
+
+
+	enum class Request
+	{
+		GetStatus = 0,
+		ClearFeature = 1,
+		SetFeature = 3,
+		SetAddress = 5,
+		GetDescriptor = 6,
+		SetDescriptor = 7,
+		GetConfiguration = 8,
+		SetConfiguration = 9,
+		GetInterface = 10,
+		setInterface = 11,
+		SynchFrame = 18,
+	};
+
+	enum class DeviceClass : uint8_t{
+		UseInterfaceClass = 0x00,
+		CDC_Control = 0x02,
+		Hub = 0x09,
+		Billboard = 0x11,
+		DiagnosticsDevice = 0xDC,
+		Miscellaneous = 0xEF,
+		VendorSpecific = 0xFF,
+	};
+	enum class InterfaceClass: uint8_t{
+		Audio = 0x01,
+		CDC_Control = 0x02,
+		HID = 0x03,
+		Physical = 0x05,
+		Image = 0x06,
+		Printer = 0x07,
+		MassStorage = 0x08,
+		CDC_Data = 0x0A,
+		SmartCard = 0x0B,
+		ContentSecurity = 0x0D,
+		Video = 0x0E,
+		PersonalHealthcare = 0x0F,
+		AudioVideo = 0x10,
+		USBC_Bridge = 0x12,
+		DiagnosticsDevice = 0xDC,
+		WirelessController = 0xE0,
+		Miscellaneous = 0xEF,
+		ApplicationSpecific = 0xFE,
+		VendorSpecific = 0xFF,
+	};
+
+	enum class USB_BCD : uint16_t{
+		USB1_0 = 0x0100,
+		USB1_1 = 0x0110,
+		USB2_0 = 0x0200,
+	};
+
+	enum class TransferType : uint8_t{
+		Control = 0b00,
+		Isochronous = 0b01,
+		Bulk = 0b10,
+		Interrupt = 0b11,
+	};
+
+	enum class ConfigurationAttributes : uint8_t{
+		NONE = 0x80,
+		RemoteWakeup = 0xA0,
+		SelfPowered = 0xC0,
+		SelfPowered_RemoteWakeup = 0xE0,
+	};
+
+	class Power{
+		const uint8_t val;
+	public:
+		constexpr Power(uint16_t power) : val{static_cast<uint8_t>(power>>1)} {}
+		constexpr operator uint8_t() { return val; }
+	};
+	constexpr Power operator""_mA(unsigned long long power) { return Power(power); }
+
 } // namespace AVR::USB
