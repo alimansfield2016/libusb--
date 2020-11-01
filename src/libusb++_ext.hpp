@@ -20,5 +20,5 @@ extern "C"{
 	extern uint8_t *usbTxLenBufs[MAX_ENDPTS];
 	extern bool usbTransactionEnd;
 
-	extern void handleTransaction() __attribute__((interrupt)) ;
+	extern void __vector_transaction() __attribute__((interrupt)) ;
 }
