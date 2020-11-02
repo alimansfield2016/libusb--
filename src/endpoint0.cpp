@@ -200,6 +200,7 @@ void Endpoint0::loadConfigurationDescriptor()
 				break;
 			offset = 9;
 			stateIdx++;
+			buf_ptr = getInterfaceDescriptorBuf(getInterface(getConfiguration(pDevice)));
 			[[fallthrough]];
 		case 2:	//interface descriptor
 			ptr.assign(*id_ptr + offset);

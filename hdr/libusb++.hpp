@@ -118,6 +118,7 @@ namespace AVR::USB
 		VendorSpecific = 0xFF,
 	};
 	enum class InterfaceClass: uint8_t{
+		NONE = 0,
 		Audio = 0x01,
 		CDC_Control = 0x02,
 		HID = 0x03,

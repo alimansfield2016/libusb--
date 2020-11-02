@@ -6,10 +6,10 @@
 
 #include <array>
 
-constexpr std::constexpr_vector_c<AVR::USB::Endpoint*, 0> PROGMEM pgmEndpoints{}; 
+const std::constexpr_vector_c<AVR::USB::Endpoint*, 0> PROGMEM pgmEndpoints{}; 
 
-constexpr AVR::USB::Interface PROGMEM pgmInterface{
-	AVR::USB::InterfaceClass::VendorSpecific,
+const AVR::USB::Interface PROGMEM pgmInterface{
+	AVR::USB::InterfaceClass::NONE,
 	0x00,
 	0x01,
 	&pgmEndpoints,
@@ -17,24 +17,24 @@ constexpr AVR::USB::Interface PROGMEM pgmInterface{
 	0
 };
 
-constexpr std::constexpr_vector_c<const AVR::USB::Interface*, 1> PROGMEM pgmInterfaceConfiguration{{
+const std::constexpr_vector_c<const AVR::USB::Interface*, 1> PROGMEM pgmInterfaceConfiguration{{
 	&pgmInterface
 }};
-constexpr std::constexpr_vector_c<const std::constexpr_vector<const AVR::USB::Interface*>*, 1> PROGMEM pgmInterfaceConfigurations{{
+const std::constexpr_vector_c<const std::constexpr_vector<const AVR::USB::Interface*>*, 1> PROGMEM pgmInterfaceConfigurations{{
 	&pgmInterfaceConfiguration
 }};
 
-constexpr AVR::USB::Configuration PROGMEM pgmConfiguration{
+const AVR::USB::Configuration PROGMEM pgmConfiguration{
 	AVR::USB::ConfigurationAttributes::NONE,
 	&pgmInterfaceConfigurations,
-	0
+	1
 };
 
-constexpr std::constexpr_vector_c<const AVR::USB::Configuration*, 1> PROGMEM pgmConfigurations{{
+const std::constexpr_vector_c<const AVR::USB::Configuration*, 1> PROGMEM pgmConfigurations{{
 	&pgmConfiguration
 }};
 
-constexpr AVR::USB::Device PROGMEM pgmDevice{
+const AVR::USB::Device PROGMEM pgmDevice{
 	AVR::USB::USB_BCD::USB1_1,
 	0x16C0,
 	0x05DC,

@@ -10,25 +10,25 @@
 namespace AVR::USB
 {
 	
-	constexpr [[nodiscard]] AVR::pgm_ptr<const uint8_t> getDeviceDescriptorBuf(const Device *dev)
+	constexpr AVR::pgm_ptr<const uint8_t> getDeviceDescriptorBuf(const Device *dev)
 	{
 		AVR::pgm_ptr<const uint8_t*> p_buf{&dev->m_descriptor.m_ptr};
 		return AVR::pgm_ptr<const uint8_t>{*p_buf};
 	}
 
-	constexpr [[nodiscard]] AVR::pgm_ptr<const uint8_t> getConfigurationDescriptorBuf(const Configuration *cfg)
+	constexpr AVR::pgm_ptr<const uint8_t> getConfigurationDescriptorBuf(const Configuration *cfg)
 	{
 		AVR::pgm_ptr<const uint8_t*> p_buf{&cfg->m_descriptor.m_ptr};
 		return AVR::pgm_ptr<const uint8_t>{*p_buf};
 	}
 	
-	constexpr [[nodiscard]] AVR::pgm_ptr<const uint8_t> getInterfaceDescriptorBuf(const Interface *itf)
+	constexpr AVR::pgm_ptr<const uint8_t> getInterfaceDescriptorBuf(const Interface *itf)
 	{
 		AVR::pgm_ptr<const uint8_t*> p_buf{&itf->m_descriptor.m_ptr};
 		return AVR::pgm_ptr<const uint8_t>{*p_buf};
 	}
 	
-	constexpr [[nodiscard, deprecated]] AVR::pgm_ptr<const uint8_t> getEndpointDescriptorBuf(const Endpoint *ept)
+	constexpr AVR::pgm_ptr<const uint8_t> getEndpointDescriptorBuf(const Endpoint *ept)
 	{
 		// AVR::pgm_ptr<const EndpointDescriptor> p_desc{ept->m_descriptor};
 		// AVR::pgm_ptr<const uint8_t> p_buf{*p_desc.m_ptr};
@@ -37,7 +37,7 @@ namespace AVR::USB
 	}
 
 
-	constexpr [[nodiscard]] const Configuration* getConfiguration(const Device *dev, uint8_t idx = 0)
+	constexpr const Configuration* getConfiguration(const Device *dev, uint8_t idx = 0)
 	{
 		//if out of range return nullptr
 		AVR::pgm_ptr<const std::constexpr_vector<const Configuration*>*> p_configurations{&dev->m_configurations};
@@ -51,7 +51,7 @@ namespace AVR::USB
 		return nullptr;
 	}
 
-	constexpr [[nodiscard]] AVR::pgm_ptr<const std::constexpr_vector<const Interface*>> getInterfaces(const Configuration *dev, uint8_t idx = 0)
+	constexpr AVR::pgm_ptr<const std::constexpr_vector<const Interface*>> getInterfaces(const Configuration *dev, uint8_t idx = 0)
 	{
 		//if out of range return nullptr
 		AVR::pgm_ptr<
@@ -73,7 +73,7 @@ namespace AVR::USB
 		return AVR::pgm_ptr<const std::constexpr_vector<const Interface*>>{nullptr};
 	}
 
-	constexpr [[nodiscard]] AVR::pgm_ptr<const Interface> getInterface(const Configuration *dev, uint8_t idx = 0, uint8_t alt = 0)
+	constexpr const Interface* getInterface(const Configuration *dev, uint8_t idx = 0, uint8_t alt = 0)
 	{
 		//if out of range return nullptr
 		AVR::pgm_ptr<
@@ -87,22 +87,22 @@ namespace AVR::USB
 				>
 			> interfaces{*p_interfaces};
 		
-		if(idx >= (*interfaces).size()) return AVR::pgm_ptr<const Interface>{nullptr};
+		if(idx >= (*interfaces).size()) return nullptr;
 
 		AVR::pgm_ptr<const std::constexpr_vector<const Interface*>*> arr{(*interfaces).begin()};
-		if(!arr) return AVR::pgm_ptr<const Interface>{nullptr};
+		if(!arr) return nullptr;
 
 		AVR::pgm_ptr<const std::constexpr_vector<const Interface*>> elem{arr[idx]};
 
 		std::constexpr_vector<const Interface*> o_interfaces{*elem};
-		if(alt >= o_interfaces.size()) return AVR::pgm_ptr<const Interface>{nullptr};
+		if(alt >= o_interfaces.size()) return nullptr;
 
 		AVR::pgm_ptr<const Interface*> p_interface{o_interfaces.begin()};
 		
-		return AVR::pgm_ptr<const Interface>{p_interface[idx]};
+		return p_interface[idx];
 	}
 
-	constexpr [[nodiscard]] AVR::USB::Endpoint* getEndpoint(const Interface *itf, uint8_t idx = 0)
+	constexpr AVR::USB::Endpoint* getEndpoint(const Interface *itf, uint8_t idx = 0)
 	{
 		//if out of range, return nullptr
 		AVR::pgm_ptr<const std::constexpr_vector<Endpoint*>*> p_endpoints{&itf->m_endpoints};
