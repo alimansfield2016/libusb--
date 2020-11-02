@@ -18,9 +18,9 @@ namespace AVR::USB
 
 	class Endpoint
 	{
+	public:
 		//PROGMEM ptr
 		const EndpointDescriptor * m_descriptor;
-	public:
 		 [[nodiscard]]::AVR::pgm_ptr<const uint8_t> DescriptorBuf() const;
 	};
 

@@ -8,13 +8,12 @@ namespace AVR::USB
 	{
 		public:
 		const uint8_t *const m_ptr;
+		uint8_t bLength() const { return m_ptr[0]; };
+		DescriptorType bDescriptorType() const { return static_cast<DescriptorType>(m_ptr[1]); };
 		protected:
 		constexpr Descriptor(const uint8_t *const ptr) : m_ptr(ptr) 
 		{
 		}
-		public:
-		uint8_t bLength() const { return m_ptr[0]; };
-		DescriptorType bDescriptorType() const { return static_cast<DescriptorType>(m_ptr[1]); };
 	};
 
 	class DeviceDescriptor : public Descriptor
@@ -134,12 +133,16 @@ namespace AVR::USB
 		uint8_t iInterface() { return static_cast<uint8_t>(m_buf[8]); }
 	};
 
-	struct EndpointDescriptor : Descriptor
+	class EndpointDescriptor : public Descriptor
 	{
-		uint8_t bEndpointAddress;
-		uint8_t bmAttributes;
-		uint16_t wMaxPacketSize;
-		uint8_t bInterval;
+		
+	};
+
+	class StringDescriptor : public Descriptor
+	{
+	public:
+		constexpr StringDescriptor() :
+			Descriptor(nullptr) {}
 	};
 
 } // namespace AVR::USB

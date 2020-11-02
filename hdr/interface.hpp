@@ -9,13 +9,13 @@ namespace AVR::USB
 	class Interface;
 	class Interface
 	{
+	public:
 		//Endpoints
 		const std::constexpr_vector<Endpoint*> *m_endpoints;
 
 		//descriptor
 		const InterfaceDescriptor m_descriptor;
 
-	public:
 		constexpr Interface(
 			InterfaceClass _bInterfaceClass,
 			uint8_t _bInterfaceSubClass,

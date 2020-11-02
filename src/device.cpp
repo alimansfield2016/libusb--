@@ -45,4 +45,4 @@ constexpr AVR::USB::Device PROGMEM pgmDevice{
 	&pgmConfigurations
 };
 
-const AVR::USB::Device *pDevice{&pgmDevice};
+const AVR::USB::Device *AVR::USB::pDevice{&pgmDevice};

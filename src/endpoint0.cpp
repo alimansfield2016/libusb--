@@ -1,3 +1,5 @@
+#include <pgm_deref.hpp>
+
 #include "endpoint0.hpp"
 #include "descriptor.hpp"
 #include "libusb++_ext.hpp"
@@ -112,6 +114,7 @@ void Endpoint0::getDescriptor(DescriptorType type, uint8_t idx)
 	case DescriptorType::Device :
 		stateIdx = 0;
 		state = State::DeviceDescriptor;
+		buf_ptr = getDeviceDescriptorBuf(pDevice);
 		loadDeviceDescriptor();
 		break;
 	case DescriptorType::Configuration :
@@ -144,75 +147,14 @@ constexpr AVR::USB::DeviceDescriptor PROGMEM deviceDescriptor {
 void Endpoint0::loadDeviceDescriptor()
 {
 	
-	AVR::pgm_ptr<const uint8_t*> p_ptr{&deviceDescriptor.m_ptr};
-	// const uint8_t* const _ptr = *p_ptr;
-	AVR::pgm_ptr<uint8_t> ptr{*p_ptr + offset};
-
 	uint8_t i;
 	for(i = 0; (i < 8) && (offset < 0x12) && maxLength; i++, --maxLength, offset++)
 		{
-			txBuf[i] = *ptr++;
+			txBuf[i] = *buf_ptr++;
 		}
 	genPacket(getDataPID(), i);
 	if(i < 8) resetState();
 	
-	/*
-	switch (stateIdx++)
-	{
-	case 0:
-		{
-			//bLength
-			txBuf[0] = bLength;
-			//bDescriptorType
-			txBuf[1] = bDescriptorType;
-			//bcdUSB
-			txBuf[2] = bcdUSB&0xFF;
-			txBuf[3] = bcdUSB>>8;
-			//bDeviceClass
-			txBuf[4] = 0xFF;
-			//bDeviceSubClass
-			txBuf[5] = 0x00;
-			//bDeviceProtocol
-			txBuf[6] = 0x00;
-			//bMaxPacketSize0
-			txBuf[7] = 0x08;
-			genPacket(getDataPID(), 8);
-		}
-		break;
-	case 1:
-		{
-			//idVendor
-			txBuf[0] = idVendor&0xFF;
-			txBuf[1] = idVendor>>8;
-			//idProduct
-			txBuf[2] = idProduct&0xFF;
-			txBuf[3] = idProduct>>8;
-			//bcdDevice
-			txBuf[4] = bcdDevice&0xFF;
-			txBuf[5] = bcdDevice>>8;
-			//iManufacturer
-			txBuf[6] = 0;
-			//iProduct
-			txBuf[7] = 0;
-			genPacket(getDataPID(), 8);
-		}
-		break;
-	case 2:
-		{
-			//iSerialNumber
-			txBuf[0] = 0;
-			//bNumConfigurations
-			txBuf[1] = 1;
-			genPacket(getDataPID(), 2);
-			resetState();
-		}
-		break;
-	
-	default:
-		stateIdx--;
-		break;
-	}
-	*/
 }
 
 constexpr AVR::USB::ConfigurationDescriptor PROGMEM configurationDescriptor {
@@ -246,19 +188,23 @@ void Endpoint0::loadConfigurationDescriptor()
 	uint8_t i = 0;
 
 	switch(stateIdx){
-		case 0:	//configuration descriptor
-			ptr.assign(*cd_ptr + offset);
-			for(; i < 8 && offset < 9 && maxLength; i++, ptr++, maxLength--, offset++)
-				txBuf[i] = *ptr;
+		case 0: //init
+			buf_ptr = getConfigurationDescriptorBuf(getConfiguration(pDevice));
+			stateIdx++;
+			offset = 9;
+			[[fallthrough]];
+		case 1:	//configuration descriptor
+			for(; i < 8 && offset  && maxLength; i++, maxLength--, offset--)
+				txBuf[i] = *buf_ptr++;
 			if(i==8)
 				break;
-			offset = 0;
+			offset = 9;
 			stateIdx++;
 			[[fallthrough]];
-		case 1:	//interface descriptor
+		case 2:	//interface descriptor
 			ptr.assign(*id_ptr + offset);
-			for(; i < 8 && offset < 9 && maxLength; i++, ptr++, maxLength--, offset++)
-				txBuf[i] = *ptr;
+			for(; i < 8 && offset && maxLength; i++, maxLength--, offset--)
+				txBuf[i] = *buf_ptr++;
 			if(i==8)
 				break;
 			offset = 0;

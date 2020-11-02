@@ -32,6 +32,7 @@ bool usbTransactionEnd;
 std::array<USB::EndpointOut*, MAX_ENDPTS> EndpointsOut;
 std::array<USB::EndpointIn*, MAX_ENDPTS> EndpointsIn;
 
+
 void disconnect()
 {
 	PORTB |= 0x02;
@@ -126,9 +127,6 @@ void __vector_transaction()
 		case PID::OUT :
 			endpt->out(buf, usbRxLen, setup);
 			break;
-		// case PID::IN :
-		// 	endpt->in();
-		// 	break;
 		
 		default:
 			break;

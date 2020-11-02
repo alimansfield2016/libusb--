@@ -9,7 +9,7 @@ namespace AVR::USB
 	class Configuration;
 	class Device
 	{
-
+	public:
 		//Manufacturer string
 		//Product string
 		//Serial number string
@@ -19,7 +19,6 @@ namespace AVR::USB
 
 		const DeviceDescriptor m_descriptor;
 
-	public:
 		constexpr Device(
 			USB_BCD _bcdUSB,
 			uint16_t _idVendor,
