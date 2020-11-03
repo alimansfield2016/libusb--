@@ -11,7 +11,7 @@ using namespace AVR::USB;
 
 Endpoint0 AVR::USB::_endp0{};
 
-void Endpoint0::setup(uint8_t *rxBuf, uint8_t &rxLen)
+bool Endpoint0::setup(uint8_t *rxBuf, uint8_t &rxLen)
 {
 	// if(rxLen < 8) {
 	// 	rxLen = 0; 
@@ -30,7 +30,6 @@ void Endpoint0::setup(uint8_t *rxBuf, uint8_t &rxLen)
 	uint16_t wValue = *rxBuf++; wValue |= *rxBuf++ << 8;
 	uint16_t wIndex = *rxBuf++; wIndex |= *rxBuf++ << 8;
 	uint16_t wCount = *rxBuf++; wCount |= *rxBuf++ << 8;
-	rxLen = 0;
 
 	//rxBuf[1]
 	RequestDirection direction = static_cast<RequestDirection>(bmRequestType>>7);
@@ -40,27 +39,31 @@ void Endpoint0::setup(uint8_t *rxBuf, uint8_t &rxLen)
 	Request request = static_cast<Request>(bRequest);
 
 	setDataPID(PID::DATA1);
-	switch (request)
-	{
-	case Request::SetAddress:
-		setDeviceAddr(wValue&0x7F);
-		break;
-	case Request::GetDescriptor:
-		maxLength = wCount;
-		getDescriptor(static_cast<DescriptorType>(wValue>>8), wValue&0xFF);
-		break;
-	case Request::SetConfiguration:
-		setConfiguration(wValue);
-		break;
-	
-	default:
-		break;
+	if(type == RequestType::Standard){
+		rxLen = 0;
+		switch (request)
+		{
+		case Request::SetAddress:
+			setDeviceAddr(wValue&0x7F);
+			break;
+		case Request::GetDescriptor:
+			maxLength = wCount;
+			getDescriptor(static_cast<DescriptorType>(wValue>>8), wValue&0xFF);
+			break;
+		case Request::SetConfiguration:
+			setConfiguration(wValue);
+			break;
+		
+		default:
+			break;
+		}
+	}else{
+		return false;
 	}
 }
 
 void Endpoint0::out(uint8_t *rxBuf, uint8_t &rxLen, bool _setup)
 {
-	PORTB ^= 0x20;
 
 	if(_setup) {
 		setup(rxBuf, rxLen);

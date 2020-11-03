@@ -22,7 +22,7 @@ namespace AVR::USB
 		AVR::pgm_ptr<const uint8_t> buf_ptr;
 	public:
 		void out(uint8_t *rxBuf, uint8_t &rxLen, bool setup) override;
-		void setup(uint8_t *rxBuf, uint8_t &rxLen);
+		bool setup(uint8_t *rxBuf, uint8_t &rxLen);
 		void in() override;
 	private:
 		void setDeviceAddr(uint8_t addr);

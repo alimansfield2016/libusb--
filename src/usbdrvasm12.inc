@@ -309,6 +309,7 @@ usbSendAndReti:
     in      x2, USBDDR          ;[-12] 12 cycles until SOP
     ori     x2, USBMASK         ;[-11]
     sbi     USBOUT, USBMINUS    ;[-10] prepare idle state; D+ and D- must have been 0 (no pullups)
+	cbi		USBOUT, USBPLUS
 	out     USBDDR, x2          ;[-8] <--- acquire bus
     in      x1, USBOUT          ;[-7] port mirror for tx loop
     ldi     shift, 0x40         ;[-6] sync byte is first byte sent (we enter loop after ror)
