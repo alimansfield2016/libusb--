@@ -10,30 +10,30 @@
 namespace AVR::USB
 {
 	
-	constexpr AVR::pgm_ptr<const uint8_t> getDeviceDescriptorBuf(const Device *dev)
+	constexpr AVR::pgm_ptr<uint8_t> getDeviceDescriptorBuf(const Device *dev)
 	{
 		AVR::pgm_ptr<const uint8_t*> p_buf{&dev->m_descriptor.m_ptr};
-		return AVR::pgm_ptr<const uint8_t>{*p_buf};
+		return AVR::pgm_ptr<uint8_t>{*p_buf};
 	}
 
-	constexpr AVR::pgm_ptr<const uint8_t> getConfigurationDescriptorBuf(const Configuration *cfg)
+	constexpr AVR::pgm_ptr<uint8_t> getConfigurationDescriptorBuf(const Configuration *cfg)
 	{
 		AVR::pgm_ptr<const uint8_t*> p_buf{&cfg->m_descriptor.m_ptr};
-		return AVR::pgm_ptr<const uint8_t>{*p_buf};
+		return AVR::pgm_ptr<uint8_t>{*p_buf};
 	}
 	
-	constexpr AVR::pgm_ptr<const uint8_t> getInterfaceDescriptorBuf(const Interface *itf)
+	constexpr AVR::pgm_ptr<uint8_t> getInterfaceDescriptorBuf(const Interface *itf)
 	{
 		AVR::pgm_ptr<const uint8_t*> p_buf{&itf->m_descriptor.m_ptr};
-		return AVR::pgm_ptr<const uint8_t>{*p_buf};
+		return AVR::pgm_ptr<uint8_t>{*p_buf};
 	}
 	
-	constexpr AVR::pgm_ptr<const uint8_t> getEndpointDescriptorBuf(const Endpoint *ept)
+	constexpr AVR::pgm_ptr<uint8_t> getEndpointDescriptorBuf(const Endpoint *ept)
 	{
 		// AVR::pgm_ptr<const EndpointDescriptor> p_desc{ept->m_descriptor};
 		// AVR::pgm_ptr<const uint8_t> p_buf{*p_desc.m_ptr};
 		// return AVR::pgm_ptr<const uint8_t>{*p_buf};
-		return AVR::pgm_ptr<const uint8_t>(nullptr);
+		return AVR::pgm_ptr<uint8_t>(nullptr);
 	}
 
 
@@ -123,7 +123,7 @@ namespace AVR::USB
 		return tbl.string(idx);
 	}
 
-	constexpr const AVR::USB::StringDescriptorTable* getStringTable(const Device *dev, [[unused]] LanguageID lang = LanguageID::English_United_States)
+	constexpr const AVR::USB::StringDescriptorTable* getStringTable(const Device *dev, LanguageID lang = LanguageID::English_United_States)
 	{
 		AVR::pgm_ptr<const AVR::USB::StringDescriptorTable*> _ptr{&dev->m_strings};
 		return *_ptr;

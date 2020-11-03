@@ -32,9 +32,9 @@ namespace AVR::USB
 
 			const std::constexpr_vector<const Configuration*> *_configurations,
 			const StringDescriptorTable *_strings,
-			uint16_t _iManufacturer = 0,
-			uint16_t _iProduct = 0,
-			uint16_t _iSerialNumber = 0
+			uint8_t _iManufacturer = 0,
+			uint8_t _iProduct = 0,
+			uint8_t _iSerialNumber = 0
 		) : 
 			m_configurations{_configurations},
 			m_strings{_strings},

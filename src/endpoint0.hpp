@@ -19,7 +19,7 @@ namespace AVR::USB
 		uint8_t stateIdx;
 		uint8_t offset;
 		uint16_t maxLength;
-		AVR::pgm_ptr<const uint8_t> buf_ptr;
+		AVR::pgm_ptr<uint8_t> buf_ptr;
 	public:
 		void out(uint8_t *rxBuf, uint8_t &rxLen, bool setup) override;
 		bool setup(uint8_t *rxBuf, uint8_t &rxLen);
