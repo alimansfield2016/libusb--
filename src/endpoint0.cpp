@@ -85,6 +85,9 @@ void Endpoint0::in()
 	case State::ConfigurationDescriptor :
 		loadConfigurationDescriptor();
 		break;
+	case State::StringDescriptor :
+		loadStringDescriptor();
+		break;
 	
 	default:
 		break;
@@ -109,22 +112,35 @@ void Endpoint0::setConfiguration(uint16_t config)
 void Endpoint0::getDescriptor(DescriptorType type, uint8_t idx)
 {
 	offset = 0;
+	stateIdx = 0;
 	switch (type)
 	{
 	case DescriptorType::Device :
-		stateIdx = 0;
 		state = State::DeviceDescriptor;
 		buf_ptr = getDeviceDescriptorBuf(pDevice);
 		loadDeviceDescriptor();
 		break;
 	case DescriptorType::Configuration :
-		stateIdx = 0;
 		state = State::ConfigurationDescriptor;
 		loadConfigurationDescriptor();
-	case DescriptorType::Interface :
-	case DescriptorType::Endpoint :
-	case DescriptorType::String :
-		/* code */
+		break;
+	case DescriptorType::Interface : break;
+	case DescriptorType::Endpoint : break;
+
+	case DescriptorType::String : 
+		state = State::StringDescriptor;
+		{
+			const StringDescriptorTable *tbl = pDevice->getStringTablePgmThisPgm().ptr();
+			if(idx){
+				StringDescriptorTable::Str str{tbl->stringPgmThis(idx)};
+				offset = str.first;
+				buf_ptr.assign(reinterpret_cast<const uint8_t*>(str.second));
+			}else{
+				offset = 2;
+				buf_ptr.assign(reinterpret_cast<const uint8_t*>(&tbl->m_language));
+			}
+		}
+		loadStringDescriptor();
 		break;
 	
 	default:
@@ -132,17 +148,17 @@ void Endpoint0::getDescriptor(DescriptorType type, uint8_t idx)
 	}
 }
 
-constexpr AVR::USB::DeviceDescriptor PROGMEM deviceDescriptor { 
-	USB_BCD::USB1_1, 
-	DeviceClass::VendorSpecific, 
-	0xFF, 
-	0x00, 
-	0x08, 
-	0x16c0, 
-	0x05dc, 
-	0x0103, 
-	0, 0, 0, 1
-};
+// constexpr AVR::USB::DeviceDescriptor PROGMEM deviceDescriptor { 
+// 	USB_BCD::USB1_1, 
+// 	DeviceClass::VendorSpecific, 
+// 	0xFF, 
+// 	0x00, 
+// 	0x08, 
+// 	0x16c0, 
+// 	0x05dc, 
+// 	0x0103, 
+// 	0, 0, 0, 1
+// };
 
 void Endpoint0::loadDeviceDescriptor()
 {
@@ -157,24 +173,23 @@ void Endpoint0::loadDeviceDescriptor()
 	
 }
 
-constexpr AVR::USB::ConfigurationDescriptor PROGMEM configurationDescriptor {
-	0x12,
-	1,
-	1,
-	0,
-	ConfigurationAttributes::NONE,
-	100_mA,
-};
-
-constexpr AVR::USB::InterfaceDescriptor PROGMEM interface0Descriptor {
-	0,
-	0,
-	0,
-	InterfaceClass::VendorSpecific,
-	0,
-	0,
-	0,
-};
+// constexpr AVR::USB::ConfigurationDescriptor PROGMEM configurationDescriptor {
+// 	0x12,
+// 	1,
+// 	1,
+// 	0,
+// 	ConfigurationAttributes::NONE,
+// 	100_mA,
+// };
+// constexpr AVR::USB::InterfaceDescriptor PROGMEM interface0Descriptor {
+// 	0,
+// 	0,
+// 	0,
+// 	InterfaceClass::VendorSpecific,
+// 	0,
+// 	0,
+// 	0,
+// };
 
 
 void Endpoint0::loadConfigurationDescriptor()
@@ -182,9 +197,6 @@ void Endpoint0::loadConfigurationDescriptor()
 	//first load configuration descriptor
 	//then load interface descriptors
 	//after each interface descriptor, load relevant endpoint descriptors
-	constexpr AVR::pgm_ptr<const uint8_t*> cd_ptr{&configurationDescriptor.m_ptr};
-	constexpr AVR::pgm_ptr<const uint8_t*> id_ptr{&interface0Descriptor.m_ptr};
-	AVR::pgm_ptr<uint8_t> ptr;
 	uint8_t i = 0;
 
 	switch(stateIdx){
@@ -203,7 +215,6 @@ void Endpoint0::loadConfigurationDescriptor()
 			buf_ptr = getInterfaceDescriptorBuf(getInterface(getConfiguration(pDevice)));
 			[[fallthrough]];
 		case 2:	//interface descriptor
-			ptr.assign(*id_ptr + offset);
 			for(; i < 8 && offset && maxLength; i++, maxLength--, offset--)
 				txBuf[i] = *buf_ptr++;
 			if(i==8)
@@ -222,7 +233,28 @@ void Endpoint0::loadConfigurationDescriptor()
 		//foreach endpoint descriptor
 			//loadEndpointDescriptor
 
-	
+}
 
-	
+void Endpoint0::loadStringDescriptor()
+{
+	uint8_t i = 0;
+	switch (stateIdx)
+	{
+	case 0: //init
+
+		txBuf[0] = offset+2;
+		txBuf[1] = static_cast<uint8_t>(DescriptorType::String);
+		stateIdx++;
+		i = 2;
+		maxLength-=2;
+		[[fallthrough]];	
+	case 1:
+		for(;i < 8 && offset && maxLength; i++, offset--, maxLength--)
+			txBuf[i] = *buf_ptr++;
+		if(!offset || !maxLength)
+			state = State::DEFAULT;
+	default:
+		break;
+	}
+	genPacket(getDataPID(), i);
 }

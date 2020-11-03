@@ -117,5 +117,16 @@ namespace AVR::USB
 
 	}
 
+	constexpr AVR::USB::StringDescriptorTable::Str getString(const StringDescriptorTable *_tbl, uint8_t idx)
+	{
+		const StringDescriptorTable tbl = *AVR::pgm_ptr{_tbl};
+		return tbl.string(idx);
+	}
+
+	constexpr const AVR::USB::StringDescriptorTable* getStringTable(const Device *dev, [[unused]] LanguageID lang = LanguageID::English_United_States)
+	{
+		AVR::pgm_ptr<const AVR::USB::StringDescriptorTable*> _ptr{&dev->m_strings};
+		return *_ptr;
+	}
 	
 } // namespace AVR::USB

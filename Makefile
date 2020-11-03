@@ -31,7 +31,7 @@ STANDARD = c++20
 OPTIMISATION = s
 DEFINES += __AVR_ATmega644P__ F_CPU=12000000 #ENABLE_INTERRUPTS
 LIBRARIES += atmega644p c c++ 
-WHOLE_LIBRARIES += usb++
+WHOLE_LIBRARIES += #usb++
 
 INCLUDEPATH += ${PRJDIR}/avr-libc++/hdr/ /usr/lib/avr/include/ ${PRJDIR}/libusb++/hdr/
 INC = ${INCLUDEPATH:%=-I%}

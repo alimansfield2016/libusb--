@@ -1,10 +1,36 @@
 
 #include <libusb++.hpp>
+#include <descriptor.hpp>
 #include <device.hpp>
 #include <configuration.hpp>
 #include <interface.hpp>
 
 #include <array>
+
+const wchar_t PROGMEM _MfrStr[] = L"www.fischl.de";
+const wchar_t PROGMEM _ProdStr[] = L"USBasp";
+const wchar_t PROGMEM _SerStr[] = L"AM_USB";
+
+#define STR(str) sizeof(str)-2, str
+
+using Str = AVR::USB::StringDescriptorTable::Str;
+
+const Str PROGMEM MfrStr{STR(_MfrStr)};
+const Str PROGMEM ProdStr{STR(_ProdStr)};
+const Str PROGMEM SerStr{STR(_SerStr)};
+
+const std::constexpr_vector_c<const Str*, 3> PROGMEM pgmStringsEN_US
+{{
+	&MfrStr,
+	&ProdStr,
+	&SerStr,
+}};
+
+const AVR::USB::StringDescriptorTable PROGMEM pgmStringTable
+{
+	AVR::USB::LanguageID::English_United_States,
+	&pgmStringsEN_US
+};
 
 const std::constexpr_vector_c<AVR::USB::Endpoint*, 0> PROGMEM pgmEndpoints{}; 
 
@@ -42,7 +68,11 @@ const AVR::USB::Device PROGMEM pgmDevice{
 	AVR::USB::DeviceClass::VendorSpecific,
 	0x00,
 	0x00,
-	&pgmConfigurations
+	&pgmConfigurations,
+	&pgmStringTable,
+	1,
+	2,
+	3,
 };
 
 const AVR::USB::Device *AVR::USB::pDevice{&pgmDevice};

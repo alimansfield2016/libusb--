@@ -14,6 +14,7 @@ namespace AVR::USB
 			DEFAULT,
 			DeviceDescriptor,
 			ConfigurationDescriptor,
+			StringDescriptor,
 		}state;
 		uint8_t stateIdx;
 		uint8_t offset;
@@ -30,6 +31,7 @@ namespace AVR::USB
 
 		void loadDeviceDescriptor();
 		void loadConfigurationDescriptor();
+		void loadStringDescriptor();
 
 		void resetState() { state = State::DEFAULT; stateIdx = 0; }
 	};
