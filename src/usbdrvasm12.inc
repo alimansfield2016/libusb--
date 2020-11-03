@@ -281,15 +281,14 @@ stuffN1Delay:                   ;     [03]
 
 sendNakAndReti:                 ;0 [-19] 19 cycles until SOP
     ldi     x3, USBPID_NAK      ;1 [-18]
-    rjmp    usbSendX3           ;2 [-16]
+    rjmp    usbSendX3AndReti           ;2 [-16]
 sendAckAndReti:                 ;0 [-19] 19 cycles until SOP
 	ldi		x3, 1
 	sts		usbTransactionEnd, x3
-    ldi     x3, USBPID_ACK      ;1 [-18]
-    rjmp    usbSendX3           ;2 [-16]
+    ldi     cnt, USBPID_ACK      ;1 [-18]
 sendCntAndReti:                 ;0 [-17] 17 cycles until SOP
     mov     x3, cnt             ;1 [-16]
-usbSendX3:                      ;0 [-16]
+usbSendX3AndReti:               ;0 [-16]
     ldi     YL, 20              ;1 [-15] 'x3' is R20
     ldi     YH, 0               ;1 [-14]
     ldi     cnt, 2              ;1 [-13]
@@ -310,7 +309,6 @@ usbSendAndReti:
     in      x2, USBDDR          ;[-12] 12 cycles until SOP
     ori     x2, USBMASK         ;[-11]
     sbi     USBOUT, USBMINUS    ;[-10] prepare idle state; D+ and D- must have been 0 (no pullups)
-    cbi		USBOUT, USBPLUS
 	out     USBDDR, x2          ;[-8] <--- acquire bus
     in      x1, USBOUT          ;[-7] port mirror for tx loop
     ldi     shift, 0x40         ;[-6] sync byte is first byte sent (we enter loop after ror)
