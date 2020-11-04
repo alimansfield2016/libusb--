@@ -19,6 +19,9 @@ namespace AVR::USB
 	void init(Endpoint0 *endpoint0 = nullptr);
 	void reset();
 
+	void connect();
+	void disconnect();
+
 	enum class PID : uint8_t
 	{
 		//Token

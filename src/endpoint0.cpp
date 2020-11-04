@@ -1,7 +1,7 @@
-#include <pgm_deref.hpp>
+#include <usb/pgm_deref.hpp>
+#include <usb/descriptor.hpp>
+#include <usb/endpoint0.hpp>
 
-#include "endpoint0.hpp"
-#include "descriptor.hpp"
 #include "libusb++_ext.hpp"
 
 #include <avr/io/io.hpp>
@@ -31,9 +31,6 @@ bool Endpoint0::setup(uint8_t *rxBuf, uint8_t &rxLen)
 	// 	rxLen = 0; 
 	// 	return;
 	// }
-	PORTB ^= 0x40;
-	PORTB ^= 0x40;
-
 
 	//We already know the format of the setup packet
 	//so we can index it with a struct
@@ -78,8 +75,6 @@ bool Endpoint0::setup(uint8_t *rxBuf, uint8_t &rxLen)
 
 void Endpoint0::out(uint8_t *rxBuf, uint8_t &rxLen, bool _setup)
 {
-	PORTB ^= 0x40;
-
 	if(_setup) {
 		setup(rxBuf, rxLen);
 		return;
@@ -91,9 +86,6 @@ void Endpoint0::out(uint8_t *rxBuf, uint8_t &rxLen, bool _setup)
 void Endpoint0::in()
 {
 	if(txLen()) return;
-
-	PORTB ^= 0x10;
-	PORTB ^= 0x10;
 
 	switch (state)
 	{
@@ -114,8 +106,6 @@ void Endpoint0::in()
 
 void Endpoint0::setDeviceAddr(uint8_t addr)
 {
-	PORTB ^= 0x01;
-	PORTB ^= 0x01;
 	resetState();
 	usbNewDeviceAddr = addr;
 	genPacket(getDataPID(), 0);
@@ -129,7 +119,7 @@ void Endpoint0::setConfiguration(uint16_t config)
 
 void Endpoint0::getDescriptor(DescriptorType type, uint8_t idx)
 {
-	offset = 0;
+	pageOffset = 0;
 	stateIdx = 0;
 	switch (type)
 	{
@@ -137,11 +127,12 @@ void Endpoint0::getDescriptor(DescriptorType type, uint8_t idx)
 		state = State::DeviceDescriptor;
 		buf_ptr = getDeviceDescriptorBuf(pDevice);
 		// buf_ptr = AVR::pgm_ptr{*AVR::pgm_ptr{&deviceDescriptor.m_ptr}};
-		offset = 0x12;
+		pageOffset = 0x12;
 		loadDeviceDescriptor();
 		break;
 	case DescriptorType::Configuration :
 		state = State::ConfigurationDescriptor;
+		p_configuration = getConfiguration(pDevice);
 		loadConfigurationDescriptor();
 		break;
 	case DescriptorType::Interface : break;
@@ -153,10 +144,10 @@ void Endpoint0::getDescriptor(DescriptorType type, uint8_t idx)
 			const StringDescriptorTable *tbl = pDevice->getStringTablePgmThisPgm().ptr();
 			if(idx){
 				StringDescriptorTable::Str str{tbl->stringPgmThis(idx)};
-				offset = str.first;
+				pageOffset = str.first;
 				buf_ptr.assign(reinterpret_cast<const uint8_t*>(str.second));
 			}else{
-				offset = 2;
+				pageOffset = 2;
 				buf_ptr.assign(reinterpret_cast<const uint8_t*>(&tbl->m_language));
 			}
 		}
@@ -172,7 +163,7 @@ void Endpoint0::loadDeviceDescriptor()
 {
 	
 	uint8_t i;
-	for(i = 0; (i < 8) && offset && maxLength; i++, --maxLength, --offset)
+	for(i = 0; (i < 8) && pageOffset && maxLength; i++, --maxLength, --pageOffset)
 		{
 			txBuf[i] = *buf_ptr++;
 		}
@@ -209,27 +200,27 @@ void Endpoint0::loadConfigurationDescriptor()
 
 	switch(stateIdx){
 		case 0: //init
-			buf_ptr = getConfigurationDescriptorBuf(getConfiguration(pDevice));
+			buf_ptr = getConfigurationDescriptorBuf(p_configuration);
 			// buf_ptr = AVR::pgm_ptr{*AVR::pgm_ptr{&configurationDescriptor.m_ptr}};
 			stateIdx++;
-			offset = 9;
+			pageOffset = 9;
 			[[fallthrough]];
 		case 1:	//configuration descriptor
-			for(; i < 8 && offset  && maxLength; i++, maxLength--, offset--)
+			for(; i < 8 && pageOffset  && maxLength; i++, maxLength--, pageOffset--)
 				txBuf[i] = *buf_ptr++;
 			if(i==8)
 				break;
-			offset = 9;
+			pageOffset = 9;
 			stateIdx++;
-			buf_ptr = getInterfaceDescriptorBuf(getInterface(getConfiguration(pDevice)));
+			buf_ptr = getInterfaceDescriptorBuf(getInterface(p_configuration));
 			// buf_ptr = AVR::pgm_ptr{*AVR::pgm_ptr{&interface0Descriptor.m_ptr}};
 			[[fallthrough]];
 		case 2:	//interface descriptor
-			for(; i < 8 && offset && maxLength; i++, maxLength--, offset--)
+			for(; i < 8 && pageOffset && maxLength; i++, maxLength--, pageOffset--)
 				txBuf[i] = *buf_ptr++;
 			if(i==8)
 				break;
-			offset = 0;
+			pageOffset = 0;
 			state = State::DEFAULT;
 			stateIdx = 0;
 			break;
@@ -252,16 +243,16 @@ void Endpoint0::loadStringDescriptor()
 	{
 	case 0: //init
 
-		txBuf[0] = offset+2;
+		txBuf[0] = pageOffset+2;
 		txBuf[1] = static_cast<uint8_t>(DescriptorType::String);
 		stateIdx++;
 		i = 2;
 		maxLength-=2;
 		[[fallthrough]];	
 	case 1:
-		for(;i < 8 && offset && maxLength; i++, offset--, maxLength--)
+		for(;i < 8 && pageOffset && maxLength; i++, pageOffset--, maxLength--)
 			txBuf[i] = *buf_ptr++;
-		if(!offset || !maxLength)
+		if(!pageOffset || !maxLength)
 			state = State::DEFAULT;
 	default:
 		break;

@@ -1,4 +1,4 @@
-#include <endpoint.hpp>
+#include <usb/endpoint.hpp>
 #include "usbdrv.h"
 
 using namespace AVR::USB;
@@ -21,18 +21,3 @@ void EndpointIn::genPacket(PID pid, uint8_t dataLen)
 	usbCrc16Append(txLenBuf + 2, dataLen);
 	txLenBuf[0] = dataLen+3;
 }
-
-// void _Endpoint::setup(uint8_t *rxBuf, uint8_t &rxLen)
-// {
-	
-// }
-
-// void _Endpoint::out(uint8_t *rxBuf, uint8_t &rxLen)
-// {
-	
-// }
-
-// void _Endpoint::in()
-// {
-	
-// }

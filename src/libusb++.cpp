@@ -1,17 +1,19 @@
-#include <libusb++.hpp>
-#include <device.hpp>
-#include <configuration.hpp>
-#include <interface.hpp>
-#include <endpoint.hpp>
-#include "libusb++_ext.hpp"
-#include "endpoint0.hpp"
-#include "../usbConfig.hpp"
-#include <util/delay.h>
+#include <usb/libusb++.hpp>
+#include <usb/device.hpp>
+#include <usb/configuration.hpp>
+#include <usb/interface.hpp>
+#include <usb/endpoint.hpp>
+#include <usb/endpoint0.hpp>
 
-#include <array>
+#include "libusb++_ext.hpp"
+#include "../usbConfig.hpp"
 
 #include <avr/interrupt/interrupt.hpp>
 #include <avr/interrupt/watchdog.hpp>
+
+#include <util/delay.h>
+
+#include <array>
 
 using namespace AVR;
 
@@ -32,10 +34,10 @@ bool usbTransactionEnd;
 std::array<USB::EndpointOut*, MAX_ENDPTS> EndpointsOut;
 std::array<USB::EndpointIn*, MAX_ENDPTS> EndpointsIn;
 
+const AVR::USB::Device *AVR::USB::pDevice{};
 
-void disconnect()
+void USB::disconnect()
 {
-	PORTB |= 0x02;
 	using namespace USB;
 	//set low
 	PORT &= ~(DMINUS | DPLUS);
@@ -43,9 +45,8 @@ void disconnect()
 	DDR |= (DMINUS | DPLUS);
 }
 
-void connect()
+void USB::connect()
 {
-	PORTB &= ~0x02;
 	using namespace USB;
 	//set to input
 	DDR &= ~(DMINUS | DPLUS);
@@ -91,8 +92,6 @@ void USB::init(USB::Endpoint0 *endpoint0)
 
 	//enable global interrupts
 	AVR::Interrupt::enable();
-	// PORTB |= 0x01;
-	// PORTB &= ~0x01;
 }
 
 void USB::reset()
@@ -114,7 +113,7 @@ void __vector_transaction()
 	using namespace USB;
 	EndpointOut *endpt = EndpointsOut[usbEndptNo];
 	if(!endpt) return;
-	// PORTB ^= 0x40;
+
 	PID rxToken = static_cast<PID>(usbRxToken);
 	uint8_t *buf = usbRxBuf + USB_BUF_LEN - usbInputBufOffset;
 	bool setup = false;
@@ -136,5 +135,4 @@ void __vector_transaction()
 	for(auto endptIn : EndpointsIn)
 		if(endptIn && !endptIn->txLen())endptIn->in();
 	
-	PORTB ^= 0x80;
 }

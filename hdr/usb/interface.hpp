@@ -1,7 +1,7 @@
 #pragma once
 
-#include <libusb++.hpp>
-#include <descriptor.hpp>
+#include <usb/libusb++.hpp>
+#include <usb/descriptor.hpp>
 #include <array>
 
 namespace AVR::USB

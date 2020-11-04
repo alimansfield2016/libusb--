@@ -1,9 +1,9 @@
 #pragma once
 
-#include <device.hpp>
-#include <configuration.hpp>
-#include <interface.hpp>
-#include <endpoint.hpp>
+#include <usb/device.hpp>
+#include <usb/configuration.hpp>
+#include <usb/interface.hpp>
+#include <usb/endpoint.hpp>
 
 #include <avr/memory/pgmspace.hpp>
 

@@ -1,9 +1,9 @@
 #pragma once
 
-#include <libusb++.hpp>
+#include <usb/libusb++.hpp>
+#include <usb/descriptor.hpp>
 #include <stdint.h>
 #include <avr/memory/pgmspace.hpp>
-#include <descriptor.hpp>
 
 namespace AVR::USB
 {

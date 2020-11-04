@@ -1,6 +1,6 @@
 #pragma once
 
-#include <endpoint.hpp>
+#include <usb/endpoint.hpp>
 
 namespace AVR::USB
 {
@@ -17,9 +17,11 @@ namespace AVR::USB
 			StringDescriptor,
 		}state;
 		uint8_t stateIdx;
-		uint8_t offset;
+		uint8_t pageOffset;
 		uint16_t maxLength;
 		AVR::pgm_ptr<uint8_t> buf_ptr;
+		const Configuration *p_configuration;
+		const StringDescriptorTable *p_stringTbl;
 	public:
 		void out(uint8_t *rxBuf, uint8_t &rxLen, bool setup) override;
 		bool setup(uint8_t *rxBuf, uint8_t &rxLen);

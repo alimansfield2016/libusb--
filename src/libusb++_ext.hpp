@@ -2,7 +2,7 @@
 
 #include <stdint.h>
 
-#define MAX_ENDPTS 16
+#define MAX_ENDPTS 4
 #define USB_BUF_LEN 11
 
 extern "C"{

@@ -1,6 +1,6 @@
 #pragma once
 
-#include <libusb++.hpp>
+#include <usb/libusb++.hpp>
 #include <array>
 
 namespace AVR::USB

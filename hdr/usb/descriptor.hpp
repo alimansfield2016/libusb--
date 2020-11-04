@@ -1,7 +1,9 @@
 #pragma once
 
-#include <libusb++.hpp>
-#include <endpoint.hpp>
+#include <usb/libusb++.hpp>
+#include <usb/endpoint.hpp>
+
+#include <avr/memory/pgmspace.hpp>
 
 #include <utility>
 #include <array>
