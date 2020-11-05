@@ -26,6 +26,7 @@ namespace AVR::USB
 	{
 		const uint8_t m_buf[18];
 		public:
+		static constexpr uint8_t s_size = 0x12;	//18
 		constexpr DeviceDescriptor(
 				USB_BCD _bcdUSB, 
 				DeviceClass _bDeviceClass,
@@ -41,7 +42,7 @@ namespace AVR::USB
 				uint8_t _bNumConfigurations) : 
 			Descriptor(m_buf),
 			m_buf{
-				static_cast<uint8_t>(0x12),
+				static_cast<uint8_t>(s_size),
 				static_cast<uint8_t>(DescriptorType::Device),
 				static_cast<uint8_t>(static_cast<uint16_t>(_bcdUSB)&0xFF),
 				static_cast<uint8_t>(static_cast<uint16_t>(_bcdUSB)>>8),
@@ -78,6 +79,7 @@ namespace AVR::USB
 	{
 		const uint8_t m_buf[9];
 	public:
+		static constexpr uint8_t s_size = 9;
 		constexpr ConfigurationDescriptor(
 				uint16_t _wTotalLength,
 				uint8_t _bNumInterfaces,
@@ -87,7 +89,7 @@ namespace AVR::USB
 				Power _bMaxPower ) : 
 			Descriptor(m_buf),
 			m_buf{
-				static_cast<uint8_t>(0x09),
+				static_cast<uint8_t>(s_size),
 				static_cast<uint8_t>(DescriptorType::Configuration),
 				static_cast<uint8_t>(_wTotalLength&0xFF),
 				static_cast<uint8_t>(_wTotalLength>>8),
@@ -109,6 +111,7 @@ namespace AVR::USB
 	{
 		const uint8_t m_buf[9];
 	public:
+		static constexpr uint8_t s_size = 9;
 		constexpr InterfaceDescriptor(
 				uint8_t _bInterfaceNumber,
 				uint8_t _bAlternateSetting,
@@ -120,7 +123,7 @@ namespace AVR::USB
 			) :
 			Descriptor(m_buf),
 			m_buf{
-				static_cast<uint8_t>(0x09),
+				static_cast<uint8_t>(s_size),
 				static_cast<uint8_t>(DescriptorType::Interface),
 				static_cast<uint8_t>(_bInterfaceNumber),
 				static_cast<uint8_t>(_bAlternateSetting),
@@ -141,7 +144,33 @@ namespace AVR::USB
 
 	class EndpointDescriptor : public Descriptor
 	{
-		
+		const uint8_t m_buf[7];
+	public:
+		static constexpr uint8_t s_size = 7;
+		constexpr EndpointDescriptor(
+			EndpointDirection _dir,
+			uint8_t _endptNo,
+			EndpointTransferType _ett,
+			EndpointSynchronisationType _est,
+			EndpointUsageType _eut,
+			uint8_t _bInterval = 10
+		) : Descriptor{m_buf},
+			m_buf{
+				static_cast<uint8_t>(s_size),
+				static_cast<uint8_t>(DescriptorType::Endpoint),
+				static_cast<uint8_t>(
+					 static_cast<bool>(_dir) << 7 |
+					(static_cast<uint8_t>(_endptNo) & 0x0F) 
+				),
+				static_cast<uint8_t>(
+					static_cast<uint8_t>(_ett) << 0 | 
+					static_cast<uint8_t>(_est) << 2 | 
+					static_cast<uint8_t>(_eut) << 4
+				),
+				static_cast<uint8_t>(0x08),
+				static_cast<uint8_t>(0x00),
+				_bInterval
+			} {}
 	};
 
 	enum class LanguageID : uint16_t{

@@ -93,6 +93,7 @@ namespace AVR::USB
 		OtherSpeedConfiguration = 7,
 		InterfacePower = 8,
 		OnTheGo = 9,
+		Debug = 10,
 	};
 
 
@@ -162,6 +163,34 @@ namespace AVR::USB
 		SelfPowered = 0xC0,
 		SelfPowered_RemoteWakeup = 0xE0,
 	};
+
+
+	enum class EndpointDirection : bool{
+		OUT = 0,
+		IN = 1
+	};
+
+	enum class EndpointTransferType : uint8_t{
+		Control = 0x00,
+		Isochronous = 0x01,
+		Bulk = 0x02,
+		Interrupt = 0x03,
+	};
+
+	enum class EndpointSynchronisationType : uint8_t{
+		None = 0x00,
+		Async = 0x01,
+		Adaptive = 0x02,
+		Sync = 0x03,
+	};
+	
+	enum class EndpointUsageType : uint8_t{
+		Data = 0x00,
+		Feedback = 0x01,
+		ImplicitFeedback = 0x02,
+		Reserved = 0x03,
+	};
+	
 
 	class Power{
 		const uint8_t val;

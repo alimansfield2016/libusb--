@@ -2,6 +2,8 @@
 
 #include <usb/endpoint.hpp>
 
+#include <usb/device.hpp>
+
 namespace AVR::USB
 {
 	class Endpoint0;
@@ -19,11 +21,20 @@ namespace AVR::USB
 		uint8_t stateIdx;
 		uint8_t pageOffset;
 		uint16_t maxLength;
+		uint8_t intfIdx;
+		uint8_t altIdx;
+		uint8_t endptIdx;
 		AVR::pgm_ptr<uint8_t> buf_ptr;
 		const Configuration *p_configuration;
+		const Interface *p_interface;
+		const Endpoint *p_endpoint;
 		const StringDescriptorTable *p_stringTbl;
 	public:
-		void out(uint8_t *rxBuf, uint8_t &rxLen, bool setup) override;
+		Endpoint0(
+			const EndpointDescriptor *_descIn,
+			const EndpointDescriptor *_descOut
+		) : EndpointInOut{_descIn, _descOut} {}
+		bool out(uint8_t *rxBuf, uint8_t &rxLen, bool setup) override;
 		bool setup(uint8_t *rxBuf, uint8_t &rxLen);
 		void in() override;
 	private:
@@ -34,6 +45,11 @@ namespace AVR::USB
 		void loadDeviceDescriptor();
 		void loadConfigurationDescriptor();
 		void loadStringDescriptor();
+
+		void loadDebugDescriptor();
+
+		void nextInterface();
+		void nextEndpoint();
 
 		void resetState() { state = State::DEFAULT; stateIdx = 0; }
 	};

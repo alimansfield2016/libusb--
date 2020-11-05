@@ -30,10 +30,8 @@ namespace AVR::USB
 	
 	constexpr AVR::pgm_ptr<uint8_t> getEndpointDescriptorBuf(const Endpoint *ept)
 	{
-		// AVR::pgm_ptr<const EndpointDescriptor> p_desc{ept->m_descriptor};
-		// AVR::pgm_ptr<const uint8_t> p_buf{*p_desc.m_ptr};
-		// return AVR::pgm_ptr<const uint8_t>{*p_buf};
-		return AVR::pgm_ptr<uint8_t>(nullptr);
+		AVR::pgm_ptr ptr{ept->m_descriptor};
+		return AVR::pgm_ptr<uint8_t>{(*ptr).m_ptr};
 	}
 
 
@@ -107,10 +105,10 @@ namespace AVR::USB
 		//if out of range, return nullptr
 		AVR::pgm_ptr<const std::constexpr_vector<Endpoint*>*> p_endpoints{&itf->m_endpoints};
 		AVR::pgm_ptr<const std::constexpr_vector<Endpoint*>> endpoints{*p_endpoints};
-		
-		if(idx >= (*endpoints).size()) return nullptr;
+		const std::constexpr_vector<AVR::USB::Endpoint *> _arr{*endpoints};
+		if(idx >= _arr.size()) return nullptr;
 
-		AVR::pgm_ptr<Endpoint*> arr{(*endpoints).begin()};
+		AVR::pgm_ptr<Endpoint*> arr{_arr.begin()};
 		if(arr)
 			return arr[idx];
 		return nullptr;

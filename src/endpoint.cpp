@@ -10,11 +10,6 @@ AVR::pgm_ptr<const uint8_t> Endpoint::DescriptorBuf() const
 		);
 }
 
-EndpointIn::EndpointIn() : 
-	DataPID{PID::DATA0},
-	txBuf{&txLenBuf[2]}
-{}
-
 void EndpointIn::genPacket(PID pid, uint8_t dataLen)
 {
 	txLenBuf[1] = static_cast<uint8_t>(pid);

@@ -7,8 +7,21 @@
 namespace AVR::USB
 {
 	class Interface;
+
+	/**
+	 * Interface Class Arguments
+	 * 
+	 * InterfaceClass _bInterfaceClass
+	 * uint8_t _bInterfaceSubClass
+	 * uint8_t _bInterfaceProtocol
+	 * const std::constexpr_vector_c<Endpoint*, n> *_endpoints
+	 * uint8_t _bInterfaceNumber
+	 * uint8_t _bAlternateSetting
+	 * 
+	 */
 	class Interface
 	{
+		friend class Configuration;
 	public:
 		//Endpoints
 		const std::constexpr_vector<Endpoint*> *m_endpoints;
@@ -22,7 +35,8 @@ namespace AVR::USB
 			uint8_t _bInterfaceProtocol,
 			const std::constexpr_vector<Endpoint*> *_endpoints,
 			uint8_t _bInterfaceNumber,
-			uint8_t _bAlternateSetting
+			uint8_t _bAlternateSetting,
+			uint8_t _iInterface = 0
 		) : 
 			m_endpoints{_endpoints},
 			m_descriptor{
@@ -33,7 +47,7 @@ namespace AVR::USB
 				_bInterfaceSubClass,
 				_bInterfaceProtocol,
 				// _InterfaceStr->idx(),
-				0
+				_iInterface
 			} {}
 
 		constexpr std::constexpr_vector<Endpoint*> getEndpointsPgm()
@@ -75,6 +89,14 @@ namespace AVR::USB
 			AVR::pgm_ptr ptr{&m_descriptor.m_ptr};
 			AVR::pgm_ptr buf{*ptr};
 			return buf;
+		}
+
+	private:
+		constexpr uint16_t totalBufSize() const
+		{
+			uint16_t total = InterfaceDescriptor::s_size;
+			total += m_endpoints->size() * EndpointDescriptor::s_size;
+			return total;
 		}
 	
 	};

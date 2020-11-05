@@ -1,11 +1,19 @@
 #pragma once
 
 #include <usb/libusb++.hpp>
+#include <usb/interface.hpp>
 #include <array>
 
 namespace AVR::USB
 {
-	class Interface;
+
+	/**
+	 * 
+	 *	ConfigurationAttributes _bmAttributes
+	 *	const std::constexpr_vector_c<const std::constexpr_vector_c<const Interface*, m>*, n> *_interfaces
+	 *	uint8_t _bConfigurationValue
+	 * 
+	 */
 	class Configuration
 	{
 	public:
@@ -20,14 +28,15 @@ namespace AVR::USB
 		constexpr Configuration(
 			ConfigurationAttributes _bmAttributes,
 			const std::constexpr_vector<const std::constexpr_vector<const Interface*>*> *_interfaces,
-			uint8_t _bConfigurationValue
+			uint8_t _bConfigurationValue,
+			uint8_t _iConfiguration = 0
 		) : 
 			m_interfaces{_interfaces},
 			m_descriptor{
-				static_cast<uint16_t>(0x0012),
+				static_cast<uint16_t>(totalBufSize()),
 				static_cast<uint8_t>(_interfaces->size()),
 				static_cast<uint8_t>(_bConfigurationValue),
-				static_cast<uint8_t>(0),	//iConfiguration
+				static_cast<uint8_t>(_iConfiguration),
 				_bmAttributes,
 				100_mA
 			}
@@ -85,6 +94,16 @@ namespace AVR::USB
 			AVR::pgm_ptr ptr{&m_descriptor.m_ptr};
 			AVR::pgm_ptr buf{*ptr};
 			return buf;
+		}
+
+	private:
+		constexpr uint16_t totalBufSize() const
+		{
+			uint16_t total = ConfigurationDescriptor::s_size;
+			for(auto _it1 : *m_interfaces)
+				for(auto _it2 : *_it1)
+					total += _it2->totalBufSize();
+			return total;
 		}
 	};
 } // namespace AVR::USB

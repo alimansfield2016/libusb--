@@ -19,6 +19,7 @@ namespace AVR::USB
 	class Endpoint
 	{
 	public:
+		Endpoint(const EndpointDescriptor *_descriptor) : m_descriptor{_descriptor} {}
 		//PROGMEM ptr
 		const EndpointDescriptor * m_descriptor;
 		 [[nodiscard]]::AVR::pgm_ptr<const uint8_t> DescriptorBuf() const;
@@ -34,7 +35,10 @@ namespace AVR::USB
 		PID getDataPID() { PID pid = DataPID; if(DataPID == PID::DATA0) DataPID = PID::DATA1; else DataPID = PID::DATA0; return pid; }
 		void setDataPID(PID pid) { DataPID = pid; }
 	public:
-		EndpointIn();
+		EndpointIn(const EndpointDescriptor *_descriptor) : 
+			Endpoint{_descriptor},
+			DataPID{PID::DATA0},
+			txBuf{&txLenBuf[2]} {}
 		virtual void in() = 0;
 		uint8_t *buf() { return txLenBuf; }
 		uint8_t txLen() const { return txLenBuf[0]; }
@@ -42,7 +46,8 @@ namespace AVR::USB
 	class EndpointOut : public Endpoint
 	{
 	public:
-		virtual void out(uint8_t *rxBuf, uint8_t &rxLen, bool setup) = 0;
+		EndpointOut(const EndpointDescriptor *_descriptor) : Endpoint{_descriptor} {}
+		virtual bool out(uint8_t *rxBuf, uint8_t &rxLen, bool setup) = 0;
 	};
 
 	class EndpointSetup : public EndpointOut
@@ -54,6 +59,9 @@ namespace AVR::USB
 	class EndpointInOut : public EndpointIn, public EndpointOut
 	{
 	public:
+		EndpointInOut(const EndpointDescriptor *_descriptorIn, const EndpointDescriptor *_descriptorOut) : 
+			EndpointIn{_descriptorIn},
+			EndpointOut{_descriptorOut} {}
 	};
 
 	class _Endpoint
@@ -73,4 +81,6 @@ namespace AVR::USB
 		virtual void out(uint8_t *rxBuf, uint8_t &rxLen);
 		virtual void in();
 	};
+
+
 } // namespace AVR::USB
