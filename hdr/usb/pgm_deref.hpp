@@ -34,64 +34,56 @@ namespace AVR::USB
 	constexpr const Configuration* getConfiguration(const Device *dev, uint8_t idx = 0)
 	{
 		//if out of range return nullptr
-		AVR::pgm_ptr<const std::constexpr_vector<const Configuration*>*> p_configurations{&dev->m_configurations};
-		AVR::pgm_ptr<const std::constexpr_vector<const Configuration*>> configurations{*p_configurations};
+		AVR::pgm_ptr p_configurations{&dev->m_configurations};
+		AVR::pgm_ptr configurations{*p_configurations};
 		
-		if(idx >= (*configurations).size()) return nullptr;
+		AVR::pgm_ptr size{configurations->size_p()};
+		if(idx >= *size) return nullptr;
 
-		AVR::pgm_ptr<const Configuration*> arr{(*configurations).begin()};
+		AVR::pgm_ptr arr{*AVR::pgm_ptr{configurations->p_ptr()}};
+		// AVR::pgm_ptr arr{configurations->begin()};
 		if(arr)
 			return arr[idx];
 		return nullptr;
 	}
 
-	constexpr AVR::pgm_ptr<const std::constexpr_vector<const Interface*>> getInterfaces(const Configuration *dev, uint8_t idx = 0)
+	constexpr AVR::pgm_ptr<std::constexpr_vector<const Interface*>> getInterfaces(const Configuration *dev, uint8_t idx = 0)
 	{
 		//if out of range return nullptr
-		AVR::pgm_ptr<
-			const std::constexpr_vector<
-				const std::constexpr_vector<const Interface*>*
-				>*
-			> p_interfaces{&dev->m_interfaces};
-		AVR::pgm_ptr<
-			const std::constexpr_vector<
-				const std::constexpr_vector<const Interface*>*
-				>
-			> interfaces{*p_interfaces};
+		AVR::pgm_ptr p_interfaces{&dev->m_interfaces};
+		AVR::pgm_ptr interfaces{*p_interfaces};
 		
-		if(idx >= (*interfaces).size()) return AVR::pgm_ptr<const std::constexpr_vector<const Interface*>>{nullptr};
+		AVR::pgm_ptr size{interfaces->size_p()};
+		if(idx >= *size) return nullptr;
 
-		AVR::pgm_ptr<const std::constexpr_vector<const Interface*>*> arr{(*interfaces).begin()};
+		AVR::pgm_ptr arr{*AVR::pgm_ptr{interfaces->p_ptr()}};
+		// AVR::pgm_ptr arr{interfaces->begin()};
 		if(arr)
-			return AVR::pgm_ptr<const std::constexpr_vector<const Interface*>>{arr[idx]};
-		return AVR::pgm_ptr<const std::constexpr_vector<const Interface*>>{nullptr};
+			return arr[idx];
+		return nullptr;
 	}
 
 	constexpr const Interface* getInterface(const Configuration *dev, uint8_t idx = 0, uint8_t alt = 0)
 	{
 		//if out of range return nullptr
-		AVR::pgm_ptr<
-			const std::constexpr_vector<
-				const std::constexpr_vector<const Interface*>*
-				>*
-			> p_interfaces{&dev->m_interfaces};
-		AVR::pgm_ptr<
-			const std::constexpr_vector<
-				const std::constexpr_vector<const Interface*>*
-				>
-			> interfaces{*p_interfaces};
-		
-		if(idx >= (*interfaces).size()) return nullptr;
+		AVR::pgm_ptr p_interfaces{&dev->m_interfaces};
+		AVR::pgm_ptr interfaces{*p_interfaces};
 
-		AVR::pgm_ptr<const std::constexpr_vector<const Interface*>*> arr{(*interfaces).begin()};
+		AVR::pgm_ptr size{interfaces->size_p()};
+		
+		if(idx >= *size) return nullptr;
+
+		AVR::pgm_ptr arr{*AVR::pgm_ptr{interfaces->p_ptr()}};
+		// AVR::pgm_ptr arr{interfaces->begin()};
 		if(!arr) return nullptr;
 
-		AVR::pgm_ptr<const std::constexpr_vector<const Interface*>> elem{arr[idx]};
+		AVR::pgm_ptr elem{arr[idx]};
 
-		std::constexpr_vector<const Interface*> o_interfaces{*elem};
-		if(alt >= o_interfaces.size()) return nullptr;
+		size = elem->size_p();
+		if(alt >= *size) return nullptr;
 
-		AVR::pgm_ptr<const Interface*> p_interface{o_interfaces.begin()};
+		AVR::pgm_ptr p_interface{*AVR::pgm_ptr{elem->p_ptr()}};
+		// AVR::pgm_ptr p_interface{elem->begin()};
 		
 		return p_interface[idx];
 	}
@@ -101,10 +93,13 @@ namespace AVR::USB
 		//if out of range, return nullptr
 		AVR::pgm_ptr<const std::constexpr_vector<Endpoint*>*> p_endpoints{&itf->m_endpoints};
 		AVR::pgm_ptr<const std::constexpr_vector<Endpoint*>> endpoints{*p_endpoints};
-		const std::constexpr_vector<AVR::USB::Endpoint *> _arr{*endpoints};
-		if(idx >= _arr.size()) return nullptr;
+		// const std::constexpr_vector<AVR::USB::Endpoint *> _arr{*endpoints};
+		
+		AVR::pgm_ptr size{endpoints->size_p()};
+		if(idx >= *size) return nullptr;
 
-		AVR::pgm_ptr<Endpoint*> arr{_arr.begin()};
+		AVR::pgm_ptr arr{*AVR::pgm_ptr{endpoints->p_ptr()}};
+		// AVR::pgm_ptr arr{endpoints->begin()};
 		if(arr)
 			return arr[idx];
 		return nullptr;

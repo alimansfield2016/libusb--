@@ -44,45 +44,55 @@ namespace AVR::USB
 			}
 			 {}
 
-		constexpr std::constexpr_vector<const Interface*> getInterfacesPgm(uint8_t idx)
+		constexpr AVR::pgm_ptr<std::constexpr_vector<const Interface*>> getInterfacesPgm(uint8_t idx)
 		{
 			//PROGMEM
 			AVR::pgm_ptr _ptr{m_interfaces};
 			//not PROGMEM
-			auto _v{*_ptr};
+			// auto _v{*_ptr};
 			//PROGMEM
-			AVR::pgm_ptr arr{_v.begin()};
+			AVR::pgm_ptr size{_ptr->size_p()};
+			if(idx >= *size) return nullptr;
+			AVR::pgm_ptr arr{*AVR::pgm_ptr{_ptr->p_ptr()}};
+			// AVR::pgm_ptr arr{_ptr->begin()};
 			//PROGMEM
 			AVR::pgm_ptr ptr{arr[idx]};
-			return *ptr;
+			return ptr;
 		}
-		constexpr std::constexpr_vector<const Interface*> getInterfacesPgmThisPgm(uint8_t idx)
+		constexpr AVR::pgm_ptr<std::constexpr_vector<const Interface*>> getInterfacesPgmThisPgm(uint8_t idx)
 		{
 			//PROGMEM
 			AVR::pgm_ptr _pptr{&m_interfaces};
 			//PROGMEM
 			AVR::pgm_ptr _ptr{*_pptr};
 			//not PROGMEM
-			auto _v{*_ptr};
+			// auto _v{*_ptr};
 			//PROGMEM
-			AVR::pgm_ptr arr{_v.begin()};
+			AVR::pgm_ptr size{_ptr->size_p()};
+			if(idx >= *size) return nullptr;
+			AVR::pgm_ptr arr{*AVR::pgm_ptr{_ptr->p_ptr()}};
+			// AVR::pgm_ptr arr{_ptr->begin()};
 			//PROGMEM
 			AVR::pgm_ptr ptr{arr[idx]};
-			return *ptr;
+			return ptr;
 		}
 
 		constexpr AVR::pgm_ptr<Interface> getInterfacePgm(uint8_t idx, uint8_t alt=0)
 		{
 			auto interfaces = getInterfacesPgm(idx);
-			if(alt >= interfaces.size()) return AVR::pgm_ptr<Interface>{nullptr};
-			AVR::pgm_ptr arr{interfaces.begin()};
+			AVR::pgm_ptr size{interfaces->size_p()};
+			if(alt >= *size) return nullptr;
+			AVR::pgm_ptr arr{*AVR::pgm_ptr{interfaces->p_ptr()}};
+			// AVR::pgm_ptr arr{interfaces->begin()};
 			return AVR::pgm_ptr<Interface>{arr[alt]};
 		}
 		constexpr AVR::pgm_ptr<Interface> getInterfacePgmThisPgm(uint8_t idx, uint8_t alt=0)
 		{
 			auto interfaces = getInterfacesPgmThisPgm(idx);
-			if(alt >= interfaces.size()) return AVR::pgm_ptr<Interface>{nullptr};
-			AVR::pgm_ptr arr{interfaces.begin()};
+			AVR::pgm_ptr size{interfaces->size_p()};
+			if(alt >= *size) return nullptr;
+			AVR::pgm_ptr arr{*AVR::pgm_ptr{interfaces->p_ptr()}};
+			// AVR::pgm_ptr arr{interfaces->begin()};
 			return AVR::pgm_ptr<Interface>{arr[alt]};
 		}
 

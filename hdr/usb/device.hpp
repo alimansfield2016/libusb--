@@ -53,31 +53,35 @@ namespace AVR::USB
 				static_cast<uint8_t>(_configurations->size())
 			}
 			 {}
-		constexpr std::constexpr_vector<const Configuration*> getConfigurationsPgm() const {
-			return *AVR::pgm_ptr{m_configurations};
+		constexpr AVR::pgm_ptr<std::constexpr_vector<const Configuration*>> getConfigurationsPgm() const {
+			return AVR::pgm_ptr{m_configurations};
 		}
-		constexpr std::constexpr_vector<const Configuration*> getConfigurationsPgmThisPgm() const {
+		constexpr AVR::pgm_ptr<std::constexpr_vector<const Configuration*>> getConfigurationsPgmThisPgm() const {
 			AVR::pgm_ptr ptr{&m_configurations};
-			return *AVR::pgm_ptr{*ptr};
+			return AVR::pgm_ptr{*ptr};
 		}
 
 		constexpr AVR::pgm_ptr<Configuration> getConfigurationPgm(uint8_t idx) const
 		{
-			//not PROGMEM
-			auto config = getConfigurationsPgm();
-			if(idx >= config.size()) return AVR::pgm_ptr<Configuration>{nullptr};
 			//PROGMEM
-			AVR::pgm_ptr arr{config.begin()};
-			return AVR::pgm_ptr<Configuration>{arr[idx]};
+			auto config = getConfigurationsPgm();
+			AVR::pgm_ptr size{config->size_p()};
+			if(idx >= *size) return nullptr;
+			//PROGMEM
+			AVR::pgm_ptr arr{*AVR::pgm_ptr{config->p_ptr()}};
+			// AVR::pgm_ptr arr{config->begin()};
+			return arr[idx];
 		}
 		constexpr AVR::pgm_ptr<Configuration> getConfigurationPgmThisPgm(uint8_t idx) const
 		{
-			//not PROGMEM
-			auto config = getConfigurationsPgmThisPgm();
-			if(idx >= config.size()) return AVR::pgm_ptr<Configuration>{nullptr};
 			//PROGMEM
-			AVR::pgm_ptr arr{config.begin()};
-			return AVR::pgm_ptr<Configuration>{arr[idx]};
+			auto config = getConfigurationsPgmThisPgm();
+			AVR::pgm_ptr size{config->size_p()};
+			if(idx >= *size) return nullptr;
+			//PROGMEM
+			AVR::pgm_ptr arr{*AVR::pgm_ptr{config->p_ptr()}};
+			// AVR::pgm_ptr arr{config->begin()};
+			return arr[idx];
 		}
 
 		constexpr AVR::pgm_ptr<uint8_t> getDescriptorBufPgm() const 

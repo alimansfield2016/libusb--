@@ -52,32 +52,36 @@ namespace AVR::USB
 				_iInterface
 			} {}
 
-		constexpr std::constexpr_vector<Endpoint*> getEndpointsPgm()
+		constexpr AVR::pgm_ptr<std::constexpr_vector<Endpoint*>> getEndpointsPgm()
 		{
 			AVR::pgm_ptr _v{m_endpoints};
-			auto v{*_v};
-			return v;
+			// auto v{*_v};
+			return _v.ptr();
 		}
-		constexpr std::constexpr_vector<Endpoint*> getEndpointsPgmThisPgm()
+		constexpr AVR::pgm_ptr<std::constexpr_vector<Endpoint*>> getEndpointsPgmThisPgm()
 		{
 			AVR::pgm_ptr _ptr{&m_endpoints};
 			AVR::pgm_ptr _v{*_ptr};
-			auto v{*_v};
-			return v;
+			// auto v{*_v};
+			return _v.ptr();
 		}
 
 		constexpr Endpoint* getEndpoint(uint8_t idx)
 		{
 			auto endpoints = getEndpointsPgm();
-			if(idx >= endpoints.size()) return nullptr;
-			AVR::pgm_ptr arr{endpoints.begin()};
+			AVR::pgm_ptr size{endpoints->size_p()};
+			if(idx >= *size) return nullptr;
+			AVR::pgm_ptr arr{*AVR::pgm_ptr{endpoints->p_ptr()}};
+			// AVR::pgm_ptr arr{endpoints->begin()};
 			return arr[idx];
 		}
 		constexpr Endpoint* getEndpointPgmThis(uint8_t idx)
 		{
 			auto endpoints = getEndpointsPgmThisPgm();
-			if(idx >= endpoints.size()) return nullptr;
-			AVR::pgm_ptr arr{endpoints.begin()};
+			AVR::pgm_ptr size{endpoints->size_p()};
+			if(idx >= *size) return nullptr;
+			AVR::pgm_ptr arr{*AVR::pgm_ptr{endpoints->p_ptr()}};
+			// AVR::pgm_ptr arr{endpoints->begin()};
 			return arr[idx];
 		}
 

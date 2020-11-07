@@ -394,10 +394,12 @@ namespace AVR::USB
 			AVR::pgm_ptr _ptr{&m_strings};
 			AVR::pgm_ptr _arr{*_ptr};
 
-			const Arr arr = *_arr;
-			if(--idx >= arr.size())
+			// const Arr arr = *_arr;
+			AVR::pgm_ptr size{_arr->size_p()};
+			if(--idx >= *size)
 				return {0, nullptr};
-			AVR::pgm_ptr buf{arr.begin()};
+			AVR::pgm_ptr buf{*AVR::pgm_ptr{_arr->p_ptr()}};
+			// AVR::pgm_ptr buf{_arr->begin()};
 			return *AVR::pgm_ptr{buf[idx]};
 		}
 		constexpr Str string(uint8_t idx) const {
@@ -405,11 +407,13 @@ namespace AVR::USB
 
 			AVR::pgm_ptr _arr{m_strings};
 
-			Arr vec = *_arr;
-			if(--idx >= vec.size())
+			// Arr vec = *_arr;
+			AVR::pgm_ptr size{_arr->size_p()};
+			if(--idx >= *size)
 				return {0, nullptr};
-			AVR::pgm_ptr arr{vec.begin()};
-			return *AVR::pgm_ptr{arr[idx]};
+			AVR::pgm_ptr buf{*AVR::pgm_ptr{_arr->p_ptr()}};
+			// AVR::pgm_ptr buf{_arr->begin()};
+			return *AVR::pgm_ptr{buf[idx]};
 		}
 	};
 
