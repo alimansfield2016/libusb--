@@ -58,6 +58,22 @@ bool Endpoint0::setup(uint8_t *rxBuf, uint8_t &rxLen)
 	rxLen = 0;
 	switch (request)
 	{
+	case Request::GetStatus:
+		{
+			txBuf[0] = 0;
+			txBuf[1] = 0;
+			genPacket(getDataPID(), 2);
+			break;
+			switch (recipient)
+			{
+			case RequestRecipient::Device :
+				/* code */
+				break;
+			
+			default:
+				break;
+			}
+		}
 	case Request::SetAddress:
 		setDeviceAddr(wValue&0x7F);
 		break;
@@ -154,7 +170,9 @@ void Endpoint0::getDescriptor(DescriptorType type, uint8_t idx)
 		}
 		loadStringDescriptor();
 		break;
-	
+	case DescriptorType::Debug:
+		genPacket(getDataPID(), 0);
+		break;
 	default:
 		break;
 	}

@@ -1,6 +1,7 @@
-
 PROGRAM = libusb++
 PRJDIR = /home/ali/Projects/EmbeddedC++_v3
+
+MMCU = atmega644p
 
 ASMDIR = asm
 OBJDIR = obj
@@ -25,24 +26,26 @@ ASM += ${wildcard ${SRCDIR}/**/*.${ASMEXT}}
 OBJ += ${SRC:${SRCDIR}/%.${SRCEXT}=${OBJDIR}/%.${OBJEXT}}
 OBJ += ${CSRC:${SRCDIR}/%.${CSRCEXT}=${OBJDIR}/%.${OBJEXT}}
 OBJ += ${ASM:${SRCDIR}/%.${ASMEXT}=${OBJDIR}/%.${OBJEXT}}
-
-WARNINGS += all pedantic extra shadow no-overflow no-volatile no-unused-variable no-unused-parameter
+WARNINGS += all pedantic extra shadow no-overflow no-volatile
 STANDARD = c++20
-OPTIMISATION = s
+OPTIMISATION = 2
 DEFINES += __AVR_ATmega644P__ F_CPU=12000000 #ENABLE_INTERRUPTS
-LIBRARIES += atmega644p c c++ 
-WHOLE_LIBRARIES += #usb++
+WHOLE_LIBRARIES += 
+WHOLE_LIB_FLAGS =  -Wl,--whole-archive ${WHOLE_LIBRARIES:%=-l%} -Wl,--no-whole-archive
+LIBRARIES += c++ c atmega644p
+
+FLAGS_ALL = -mmcu=${MMCU}
 
 INCLUDEPATH += ${PRJDIR}/avr-libc++/hdr/ /usr/lib/avr/include/ ${PRJDIR}/libusb++/hdr/
 INC = ${INCLUDEPATH:%=-I%}
 LIBDIR += . /usr/local/avr/lib/avr5/ ${PRJDIR}/avr-libc++/ ${PRJDIR}/libusb++/
-LIB = ${LIBDIR:%=-L%} ${LIBRARIES:%=-l%} -Wl,--whole-archive ${WHOLE_LIBRARIES:%=-l%} -Wl,--no-whole-archive
+LIB = ${LIBDIR:%=-L%} ${WHOLE_LIB_FLAGS} ${LIBRARIES:%=-l%}
 
-CXX_COMPILE_FLAGS = -c -std=${STANDARD} ${WARNINGS:%=-W%} -O${OPTIMISATION} ${INC} ${DEFINES:%=-D%} -ggdb
-C_COMPILE_FLAGS = -c ${WARNINGS:%=-W%} -O${OPTIMISATION} ${INC} ${DEFINES:%=-D%} -ggdb
+CXX_COMPILE_FLAGS = ${FLAGS_ALL} -c -std=${STANDARD} ${WARNINGS:%=-W%} -O${OPTIMISATION} ${INC} ${DEFINES:%=-D%} -ggdb 
+C_COMPILE_FLAGS = ${FLAGS_ALL} -c ${WARNINGS:%=-W%} -O${OPTIMISATION} ${INC} ${DEFINES:%=-D%} -ggdb 
 ASSEMBLE_FLAGS = -c -mmcu=atmega644p ${INC} ${DEFINES:%=-D%}
 ARCHIVE_FLAGS = rcs
-LINK_FLAGS = ${LIB} -Xlinker --defsym=__DATA_REGION_ORIGIN__=0x800100
+LINK_FLAGS = ${FLAGS_ALL} ${LIB} -Xlinker --defsym=__DATA_REGION_ORIGIN__=0x800100 
 
 COMPILE = avr-gcc-10.1.0
 ASSEMBLE = avr-as

@@ -56,7 +56,7 @@ void USB::connect()
 
 void USB::init(USB::Endpoint0 *endpoint0)
 {
-	if(!pDevice) return;
+	// if(!pDevice) return;
 	reset();
 	//required pins will now be set.
 

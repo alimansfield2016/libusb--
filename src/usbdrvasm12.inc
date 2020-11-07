@@ -32,6 +32,8 @@ EOP of IN to sync pattern of DATA0 (rx, then tx)    2   7.5    16-60
 DATAx (rx) to ACK/NAK/STALL (tx)                    2   7.5    16-60
 */
 
+#define TOGGLE sbi PINB, 0
+
 ;Software-receiver engine. Strict timing! Don't change unless you can preserve timing!
 ;interrupt response time: 4 cycles + insn running = 7 max if interrupts always enabled
 ;max allowable interrupt latency: 34 cycles -> max 25 cycles interrupt disable
@@ -39,6 +41,7 @@ DATAx (rx) to ACK/NAK/STALL (tx)                    2   7.5    16-60
 ;Numbers in brackets are maximum cycles since SOF.
 USB_INTR_VECTOR:
 ;order of registers pushed: YL, SREG [sofError], YH, shift, x1, x2, x3, cnt
+	TOGGLE
     push    YL              ;2 [35] push only what is necessary to sync with edge ASAP
     in      YL, SREG        ;1 [37]
     push    YL              ;2 [39]

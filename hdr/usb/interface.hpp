@@ -8,6 +8,8 @@ namespace AVR::USB
 {
 	class Interface;
 
+	using AltInterfaces = std::constexpr_vector<const Interface*>;
+	using Interfaces = std::constexpr_vector<const AltInterfaces*>;
 	/**
 	 * Interface Class Arguments
 	 * 
