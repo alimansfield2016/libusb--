@@ -60,20 +60,19 @@ bool Endpoint0::setup(uint8_t *rxBuf, uint8_t &rxLen)
 	{
 	case Request::GetStatus:
 		{
-			txBuf[0] = 0;
-			txBuf[1] = 0;
-			genPacket(getDataPID(), 2);
-			break;
 			switch (recipient)
 			{
 			case RequestRecipient::Device :
-				/* code */
+				txBuf[0] = 0;
+				txBuf[1] = 0;
+				genPacket(getDataPID(), 2);
 				break;
 			
 			default:
 				break;
 			}
 		}
+		break;
 	case Request::SetAddress:
 		setDeviceAddr(wValue&0x7F);
 		break;
@@ -82,7 +81,7 @@ bool Endpoint0::setup(uint8_t *rxBuf, uint8_t &rxLen)
 		getDescriptor(static_cast<DescriptorType>(wValue>>8), wValue&0xFF);
 		break;
 	case Request::SetConfiguration:
-		setConfiguration(wValue);
+		setConfiguration(wValue&0xFF);
 		break;
 	
 	default:
@@ -128,10 +127,31 @@ void Endpoint0::setDeviceAddr(uint8_t addr)
 	genPacket(getDataPID(), 0);
 }
 
-void Endpoint0::setConfiguration(uint16_t config)
+void Endpoint0::setConfiguration(uint8_t config)
 {
 	resetState();
 	genPacket(getDataPID(), 0);
+
+	//setup relevant endpoints.
+	p_configuration = getConfiguration(pDevice, config);
+	intfIdx = 0;
+	while((p_interface = getInterface(p_configuration, intfIdx++)))
+	{
+		endptIdx = 0;
+		while((p_endpoint = getEndpoint(p_interface, endptIdx++)))
+		{
+			uint8_t endptNo = p_endpoint->endpointNo();
+			if(!endptNo) break;
+			if(p_endpoint->direction() == EndpointDirection::IN){
+				EndpointsIn[endptNo] = static_cast<EndpointIn*>(p_endpoint);
+				usbTxLenBufs[endptNo] = static_cast<EndpointIn*>(p_endpoint)->txLenBuf;
+			}else{
+				EndpointsOut[endptNo] = static_cast<EndpointOut*>(p_endpoint);
+			}
+		}
+	}
+	
+
 }
 
 void Endpoint0::getDescriptor(DescriptorType type, uint8_t idx)
@@ -322,7 +342,7 @@ void Endpoint0::nextInterface()
 }
 void Endpoint0::nextEndpoint()
 {
-	const Endpoint *p_ep;
+	Endpoint *p_ep;
 	p_ep = getEndpoint(p_interface, endptIdx++);
 	if(!p_ep)
 		endptIdx = 0;

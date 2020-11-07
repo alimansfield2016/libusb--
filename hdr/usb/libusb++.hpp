@@ -167,7 +167,7 @@ namespace AVR::USB
 
 	enum class EndpointDirection : bool{
 		OUT = 0,
-		IN = 1
+		IN = 1,
 	};
 
 	enum class EndpointTransferType : uint8_t{

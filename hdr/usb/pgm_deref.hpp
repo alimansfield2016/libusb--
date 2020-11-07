@@ -12,26 +12,22 @@ namespace AVR::USB
 	
 	constexpr AVR::pgm_ptr<uint8_t> getDeviceDescriptorBuf(const Device *dev)
 	{
-		AVR::pgm_ptr<const uint8_t*> p_buf{&dev->m_descriptor.m_ptr};
-		return AVR::pgm_ptr<uint8_t>{*p_buf};
+		return dev->m_descriptor.ptr_pgm();
 	}
 
 	constexpr AVR::pgm_ptr<uint8_t> getConfigurationDescriptorBuf(const Configuration *cfg)
 	{
-		AVR::pgm_ptr<const uint8_t*> p_buf{&cfg->m_descriptor.m_ptr};
-		return AVR::pgm_ptr<uint8_t>{*p_buf};
+		return cfg->m_descriptor.ptr_pgm();
 	}
 	
 	constexpr AVR::pgm_ptr<uint8_t> getInterfaceDescriptorBuf(const Interface *itf)
 	{
-		AVR::pgm_ptr<const uint8_t*> p_buf{&itf->m_descriptor.m_ptr};
-		return AVR::pgm_ptr<uint8_t>{*p_buf};
+		return itf->m_descriptor.ptr_pgm();
 	}
 	
 	constexpr AVR::pgm_ptr<uint8_t> getEndpointDescriptorBuf(const Endpoint *ept)
 	{
-		AVR::pgm_ptr ptr{ept->m_descriptor};
-		return AVR::pgm_ptr<uint8_t>{(*ptr).m_ptr};
+		return ept->m_descriptor->ptr_pgm();
 	}
 
 

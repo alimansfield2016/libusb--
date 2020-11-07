@@ -22,11 +22,14 @@ namespace AVR::USB
 		Endpoint(const EndpointDescriptor *_descriptor) : m_descriptor{_descriptor} {}
 		//PROGMEM ptr
 		const EndpointDescriptor * m_descriptor;
-		 [[nodiscard]]::AVR::pgm_ptr<const uint8_t> DescriptorBuf() const;
+		[[nodiscard]]::AVR::pgm_ptr<uint8_t> DescriptorBuf() const;
+		EndpointDirection direction() const;
+		uint8_t endpointNo() const;
 	};
 
 	class EndpointIn : public Endpoint
 	{
+		friend class Endpoint0;
 		uint8_t txLenBuf[12];
 		PID DataPID;
 	protected:

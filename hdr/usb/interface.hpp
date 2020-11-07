@@ -83,14 +83,16 @@ namespace AVR::USB
 
 		constexpr AVR::pgm_ptr<uint8_t> getDescriptorBufPgm() 
 		{
-			AVR::pgm_ptr buf{m_descriptor.m_ptr};
-			return buf;
+			return m_descriptor.ptr();
+			// AVR::pgm_ptr buf{m_descriptor.m_ptr};
+			// return buf;
 		}
 		constexpr AVR::pgm_ptr<uint8_t> getDescriptorBufPgmThisPgm() 
 		{
-			AVR::pgm_ptr ptr{&m_descriptor.m_ptr};
-			AVR::pgm_ptr buf{*ptr};
-			return buf;
+			return m_descriptor.ptr_pgm();
+			// AVR::pgm_ptr ptr{&m_descriptor.m_ptr};
+			// AVR::pgm_ptr buf{*ptr};
+			// return buf;
 		}
 
 	private:

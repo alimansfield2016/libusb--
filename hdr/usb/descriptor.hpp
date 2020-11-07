@@ -13,13 +13,12 @@ namespace AVR::USB
 	class Descriptor
 	{
 		public:
-		const uint8_t *const m_ptr;
-		uint8_t bLength() const { return m_ptr[0]; };
-		DescriptorType bDescriptorType() const { return static_cast<DescriptorType>(m_ptr[1]); };
+		constexpr const uint8_t *ptr() const { return static_cast<const uint8_t*>(static_cast<const void*>(this)); }
+		constexpr AVR::pgm_ptr<uint8_t> ptr_pgm() const { return ptr(); }
+		// uint8_t bLength() const { return ptr()[0]; };
+		// DescriptorType bDescriptorType() const { return static_cast<DescriptorType>(ptr()[1]); };
 		protected:
-		constexpr Descriptor(const uint8_t *const ptr) : m_ptr(ptr) 
-		{
-		}
+		constexpr Descriptor() { }
 	};
 
 	class DeviceDescriptor : public Descriptor
@@ -40,7 +39,7 @@ namespace AVR::USB
 				uint8_t _iProduct,
 				uint8_t _iSerialNumber,
 				uint8_t _bNumConfigurations) : 
-			Descriptor(m_buf),
+			Descriptor{},
 			m_buf{
 				static_cast<uint8_t>(s_size),
 				static_cast<uint8_t>(DescriptorType::Device),
@@ -87,7 +86,7 @@ namespace AVR::USB
 				uint8_t _iConfiguration,
 				ConfigurationAttributes _bmAttributes,
 				Power _bMaxPower ) : 
-			Descriptor(m_buf),
+			Descriptor{},
 			m_buf{
 				static_cast<uint8_t>(s_size),
 				static_cast<uint8_t>(DescriptorType::Configuration),
@@ -121,7 +120,7 @@ namespace AVR::USB
 				uint8_t _bInterfaceProtocol,
 				uint8_t _iInterface
 			) :
-			Descriptor(m_buf),
+			Descriptor{},
 			m_buf{
 				static_cast<uint8_t>(s_size),
 				static_cast<uint8_t>(DescriptorType::Interface),
@@ -154,7 +153,7 @@ namespace AVR::USB
 			EndpointSynchronisationType _est,
 			EndpointUsageType _eut,
 			uint8_t _bInterval = 10
-		) : Descriptor{m_buf},
+		) : Descriptor{},
 			m_buf{
 				static_cast<uint8_t>(s_size),
 				static_cast<uint8_t>(DescriptorType::Endpoint),
@@ -418,7 +417,7 @@ namespace AVR::USB
 	{
 	public:
 		constexpr StringDescriptor() :
-			Descriptor(nullptr) {}
+			Descriptor{} {}
 	};
 
 } // namespace AVR::USB

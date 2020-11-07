@@ -28,7 +28,7 @@ OBJ += ${CSRC:${SRCDIR}/%.${CSRCEXT}=${OBJDIR}/%.${OBJEXT}}
 OBJ += ${ASM:${SRCDIR}/%.${ASMEXT}=${OBJDIR}/%.${OBJEXT}}
 WARNINGS += all pedantic extra shadow no-overflow no-volatile
 STANDARD = c++20
-OPTIMISATION = 2
+OPTIMISATION = 3
 DEFINES += __AVR_ATmega644P__ F_CPU=12000000 #ENABLE_INTERRUPTS
 WHOLE_LIBRARIES += 
 WHOLE_LIB_FLAGS =  -Wl,--whole-archive ${WHOLE_LIBRARIES:%=-l%} -Wl,--no-whole-archive

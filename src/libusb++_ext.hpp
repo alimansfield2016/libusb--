@@ -22,3 +22,9 @@ extern "C"{
 
 	extern void __vector_transaction() __attribute__((interrupt)) ;
 }
+
+#include <array>
+#include <usb/endpoint.hpp>
+
+extern std::array<AVR::USB::EndpointOut*, MAX_ENDPTS> EndpointsOut;
+extern std::array<AVR::USB::EndpointIn*, MAX_ENDPTS> EndpointsIn;

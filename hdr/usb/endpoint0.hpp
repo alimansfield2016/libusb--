@@ -27,7 +27,7 @@ namespace AVR::USB
 		AVR::pgm_ptr<uint8_t> buf_ptr;
 		const Configuration *p_configuration;
 		const Interface *p_interface;
-		const Endpoint *p_endpoint;
+		Endpoint *p_endpoint;
 		const StringDescriptorTable *p_stringTbl;
 	public:
 		Endpoint0(
@@ -39,7 +39,7 @@ namespace AVR::USB
 		void in() override;
 	private:
 		void setDeviceAddr(uint8_t addr);
-		void setConfiguration(uint16_t config);
+		void setConfiguration(uint8_t config);
 		void getDescriptor(DescriptorType type, uint8_t idx);
 
 		void loadDeviceDescriptor();
