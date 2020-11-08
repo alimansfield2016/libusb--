@@ -55,14 +55,12 @@ namespace AVR::USB
 		constexpr AVR::pgm_ptr<std::constexpr_vector<Endpoint*>> getEndpointsPgm()
 		{
 			AVR::pgm_ptr _v{m_endpoints};
-			// auto v{*_v};
 			return _v.ptr();
 		}
 		constexpr AVR::pgm_ptr<std::constexpr_vector<Endpoint*>> getEndpointsPgmThisPgm()
 		{
 			AVR::pgm_ptr _ptr{&m_endpoints};
 			AVR::pgm_ptr _v{*_ptr};
-			// auto v{*_v};
 			return _v.ptr();
 		}
 
@@ -71,8 +69,7 @@ namespace AVR::USB
 			auto endpoints = getEndpointsPgm();
 			AVR::pgm_ptr size{endpoints->size_p()};
 			if(idx >= *size) return nullptr;
-			AVR::pgm_ptr arr{*AVR::pgm_ptr{endpoints->p_ptr()}};
-			// AVR::pgm_ptr arr{endpoints->begin()};
+			AVR::pgm_ptr arr{endpoints->begin()};
 			return arr[idx];
 		}
 		constexpr Endpoint* getEndpointPgmThis(uint8_t idx)
@@ -80,23 +77,17 @@ namespace AVR::USB
 			auto endpoints = getEndpointsPgmThisPgm();
 			AVR::pgm_ptr size{endpoints->size_p()};
 			if(idx >= *size) return nullptr;
-			AVR::pgm_ptr arr{*AVR::pgm_ptr{endpoints->p_ptr()}};
-			// AVR::pgm_ptr arr{endpoints->begin()};
+			AVR::pgm_ptr arr{endpoints->begin()};
 			return arr[idx];
 		}
 
 		constexpr AVR::pgm_ptr<uint8_t> getDescriptorBufPgm() 
 		{
 			return m_descriptor.ptr();
-			// AVR::pgm_ptr buf{m_descriptor.m_ptr};
-			// return buf;
 		}
 		constexpr AVR::pgm_ptr<uint8_t> getDescriptorBufPgmThisPgm() 
 		{
 			return m_descriptor.ptr_pgm();
-			// AVR::pgm_ptr ptr{&m_descriptor.m_ptr};
-			// AVR::pgm_ptr buf{*ptr};
-			// return buf;
 		}
 
 	private:

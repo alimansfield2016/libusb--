@@ -8,6 +8,7 @@ namespace AVR::USB
 {
 	class Endpoint0;
 	extern Endpoint0 _endp0;
+	class Interface;
 
 	class Endpoint0 : public EndpointInOut
 	{

@@ -40,8 +40,8 @@ namespace AVR::USB
 		AVR::pgm_ptr size{configurations->size_p()};
 		if(idx >= *size) return nullptr;
 
-		AVR::pgm_ptr arr{*AVR::pgm_ptr{configurations->p_ptr()}};
-		// AVR::pgm_ptr arr{configurations->begin()};
+		// AVR::pgm_ptr arr{*AVR::pgm_ptr{configurations->p_ptr()}};
+		AVR::pgm_ptr arr{configurations->begin()};
 		if(arr)
 			return arr[idx];
 		return nullptr;
@@ -56,8 +56,8 @@ namespace AVR::USB
 		AVR::pgm_ptr size{interfaces->size_p()};
 		if(idx >= *size) return nullptr;
 
-		AVR::pgm_ptr arr{*AVR::pgm_ptr{interfaces->p_ptr()}};
-		// AVR::pgm_ptr arr{interfaces->begin()};
+		// AVR::pgm_ptr arr{*AVR::pgm_ptr{interfaces->p_ptr()}};
+		AVR::pgm_ptr arr{interfaces->begin()};
 		if(arr)
 			return arr[idx];
 		return nullptr;
@@ -73,8 +73,8 @@ namespace AVR::USB
 		
 		if(idx >= *size) return nullptr;
 
-		AVR::pgm_ptr arr{*AVR::pgm_ptr{interfaces->p_ptr()}};
-		// AVR::pgm_ptr arr{interfaces->begin()};
+		// AVR::pgm_ptr arr{*AVR::pgm_ptr{interfaces->p_ptr()}};
+		AVR::pgm_ptr arr{interfaces->begin()};
 		if(!arr) return nullptr;
 
 		AVR::pgm_ptr elem{arr[idx]};
@@ -82,8 +82,8 @@ namespace AVR::USB
 		size = elem->size_p();
 		if(alt >= *size) return nullptr;
 
-		AVR::pgm_ptr p_interface{*AVR::pgm_ptr{elem->p_ptr()}};
-		// AVR::pgm_ptr p_interface{elem->begin()};
+		// AVR::pgm_ptr p_interface{*AVR::pgm_ptr{elem->p_ptr()}};
+		AVR::pgm_ptr p_interface{elem->begin()};
 		
 		return p_interface[idx];
 	}
@@ -98,8 +98,8 @@ namespace AVR::USB
 		AVR::pgm_ptr size{endpoints->size_p()};
 		if(idx >= *size) return nullptr;
 
-		AVR::pgm_ptr arr{*AVR::pgm_ptr{endpoints->p_ptr()}};
-		// AVR::pgm_ptr arr{endpoints->begin()};
+		// AVR::pgm_ptr arr{*AVR::pgm_ptr{endpoints->p_ptr()}};
+		AVR::pgm_ptr arr{endpoints->begin()};
 		if(arr)
 			return arr[idx];
 		return nullptr;

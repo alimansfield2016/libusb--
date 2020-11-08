@@ -68,8 +68,7 @@ namespace AVR::USB
 			AVR::pgm_ptr size{config->size_p()};
 			if(idx >= *size) return nullptr;
 			//PROGMEM
-			AVR::pgm_ptr arr{*AVR::pgm_ptr{config->p_ptr()}};
-			// AVR::pgm_ptr arr{config->begin()};
+			AVR::pgm_ptr arr{config->begin()};
 			return arr[idx];
 		}
 		constexpr AVR::pgm_ptr<Configuration> getConfigurationPgmThisPgm(uint8_t idx) const
@@ -79,23 +78,17 @@ namespace AVR::USB
 			AVR::pgm_ptr size{config->size_p()};
 			if(idx >= *size) return nullptr;
 			//PROGMEM
-			AVR::pgm_ptr arr{*AVR::pgm_ptr{config->p_ptr()}};
-			// AVR::pgm_ptr arr{config->begin()};
+			AVR::pgm_ptr arr{config->begin()};
 			return arr[idx];
 		}
 
 		constexpr AVR::pgm_ptr<uint8_t> getDescriptorBufPgm() const 
 		{
 			return m_descriptor.ptr();
-			// AVR::pgm_ptr buf{m_descriptor.m_ptr};
-			// return buf;
 		}
 		constexpr AVR::pgm_ptr<uint8_t> getDescriptorBufPgmThisPgm() const 
 		{
 			return m_descriptor.ptr_pgm();
-			// AVR::pgm_ptr ptr{&m_descriptor.m_ptr};
-			// AVR::pgm_ptr buf{*ptr};
-			// return buf;
 		}
 	
 		constexpr AVR::pgm_ptr<StringDescriptorTable> getStringTablePgmThisPgm() const
