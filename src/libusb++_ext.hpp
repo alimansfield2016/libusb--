@@ -21,6 +21,7 @@ extern "C"{
 	extern bool usbTransactionEnd;
 
 	extern void __vector_transaction() __attribute__((interrupt)) ;
+	extern void usbCrc16Append(uint8_t*, uint8_t);
 }
 
 #include <array>

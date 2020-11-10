@@ -113,27 +113,28 @@ void __vector_transaction()
 {
 	using namespace USB;
 	EndpointOut *endpt = EndpointsOut[usbEndptNo];
-	if(!endpt) return;
-
-	PID rxToken = static_cast<PID>(usbRxToken);
-	uint8_t *buf = usbRxBuf + USB_BUF_LEN - usbInputBufOffset;
-	bool setup = false;
-	if(usbRxLen)
-		switch (rxToken)
-		{
-		case PID::SETUP :
-			setup = true;
-			[[fallthrough]];
-		case PID::OUT :
-			endpt->out(buf, usbRxLen, setup);
-			break;
-		
-		default:
-			break;
-		}
+	if(endpt) {
+		PID rxToken = static_cast<PID>(usbRxToken);
+		uint8_t *buf = usbRxBuf + USB_BUF_LEN - usbInputBufOffset;
+		bool setup = false;
+		if(usbRxLen)
+			switch (rxToken)
+			{
+			case PID::SETUP :
+				setup = true;
+				[[fallthrough]];
+			case PID::OUT :
+				endpt->out(buf, usbRxLen, setup);
+				break;
+			default: usbRxLen = 0; break;
+			}
+	}
+	else{
+		usbRxLen = 0;
+		return;
+	}
 
 	//update endpoint TX Buffers
 	for(auto endptIn : EndpointsIn)
 		if(endptIn && !endptIn->txLen())endptIn->in();
-	
 }

@@ -37,6 +37,7 @@ namespace AVR::USB
 		void genPacket(PID pid, uint8_t dataLen);
 		PID getDataPID() { PID pid = DataPID; if(DataPID == PID::DATA0) DataPID = PID::DATA1; else DataPID = PID::DATA0; return pid; }
 		void setDataPID(PID pid) { DataPID = pid; }
+		void clear() { txLenBuf[0] = 0; }
 	public:
 		EndpointIn(const EndpointDescriptor *_descriptor) : 
 			Endpoint{_descriptor},

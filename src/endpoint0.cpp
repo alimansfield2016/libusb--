@@ -46,7 +46,7 @@ bool Endpoint0::setup(uint8_t *rxBuf, uint8_t &rxLen)
 	uint16_t wCount = *rxBuf++; wCount |= *rxBuf++ << 8;
 
 	//rxBuf[1]
-	RequestDirection direction = static_cast<RequestDirection>(bmRequestType>>7);
+	// RequestDirection direction = static_cast<RequestDirection>(bmRequestType>>7);
 	RequestRecipient recipient = static_cast<RequestRecipient>(bmRequestType&0x1F);
 	RequestType type = static_cast<RequestType>((bmRequestType>>5)&0x03);
 	//rxBuf[2]
@@ -129,12 +129,18 @@ void Endpoint0::setDeviceAddr(uint8_t addr)
 
 void Endpoint0::setConfiguration(uint8_t config)
 {
-	resetState();
+	// resetState();
 	genPacket(getDataPID(), 0);
 
 	//setup relevant endpoints.
 	p_configuration = getConfiguration(pDevice, config);
 	intfIdx = 0;
+	// // Clear previous endpoints. (Should not be necessary since host *Should* leave them be)
+	// for(uint8_t i = 1; i < MAX_ENDPTS; i++){
+	// 	EndpointsIn[i] = nullptr;
+	// 	EndpointsOut[i] = nullptr;
+	// 	usbTxLenBufs[i] = nullptr;
+	// }
 	while((p_interface = getInterface(p_configuration, intfIdx++)))
 	{
 		endptIdx = 0;
@@ -163,13 +169,14 @@ void Endpoint0::getDescriptor(DescriptorType type, uint8_t idx)
 	case DescriptorType::Device :
 		state = State::DeviceDescriptor;
 		buf_ptr = getDeviceDescriptorBuf(pDevice);
-		// buf_ptr = AVR::pgm_ptr{*AVR::pgm_ptr{&deviceDescriptor.m_ptr}};
-		pageOffset = 0x12;
+		pageOffset = DeviceDescriptor::s_size;
 		loadDeviceDescriptor();
 		break;
 	case DescriptorType::Configuration :
 		state = State::ConfigurationDescriptor;
 		p_configuration = getConfiguration(pDevice);
+		buf_ptr = getConfigurationDescriptorBuf(p_configuration);
+		pageOffset = ConfigurationDescriptor::s_size;
 		loadConfigurationDescriptor();
 		break;
 	case DescriptorType::Interface : break;	//Not directly accessible
@@ -218,85 +225,65 @@ void Endpoint0::loadConfigurationDescriptor()
 	//after each interface descriptor, load relevant endpoint descriptors
 	uint8_t i = 0;
 	do{
-		switch(stateIdx){
-			case 0: //init
-				buf_ptr = getConfigurationDescriptorBuf(p_configuration);
-				// buf_ptr = AVR::pgm_ptr{*AVR::pgm_ptr{&configurationDescriptor.m_ptr}};
-				stateIdx++;
-				pageOffset = ConfigurationDescriptor::s_size;
-				[[fallthrough]];
-			case 1:	//configuration descriptor
-				for(; i < 8 && pageOffset  && maxLength; i++, maxLength--, pageOffset--)
-					txBuf[i] = *buf_ptr++;
-				if(pageOffset && i==8)
-					break;
-				pageOffset = InterfaceDescriptor::s_size;
-				stateIdx++;
-				intfIdx = 0;
-				altIdx = 0;
-				nextInterface();
-				if(!p_interface){
-					state = State::DEFAULT;
-					stateIdx = 0;
-				}
-				buf_ptr = getInterfaceDescriptorBuf(p_interface);
-				[[fallthrough]];
-			case 2:	//interface descriptor
-				for(; i < 8 && pageOffset && maxLength; i++, maxLength--, pageOffset--)
-					txBuf[i] = *buf_ptr++;
-				if(pageOffset && i==8)
-					break;
-				pageOffset = EndpointDescriptor::s_size;
-				endptIdx = 0;
-				nextEndpoint();
-				if(!p_endpoint){
+		for(; i < 8 && pageOffset  && maxLength; i++, maxLength--, pageOffset--)
+			txBuf[i] = *buf_ptr++;
+		if(!pageOffset || i!=8){
+			switch(stateIdx){
+				case 0:	//configuration descriptor
+					pageOffset = InterfaceDescriptor::s_size;
+					stateIdx++;
+					intfIdx = 0;
+					altIdx = 0;
 					nextInterface();
 					if(!p_interface){
-						stateIdx = 0;
 						state = State::DEFAULT;
+						stateIdx = 0;
 					}
 					buf_ptr = getInterfaceDescriptorBuf(p_interface);
-					pageOffset = InterfaceDescriptor::s_size;
 					break;
-				}
-				buf_ptr = getEndpointDescriptorBuf(p_endpoint);
-				stateIdx++;
-				[[fallthrough]];
-			case 3:	//Endpoint Descriptor
-				for(; i < 8 && pageOffset && maxLength; i++, maxLength--, pageOffset--)
-					txBuf[i] = *buf_ptr++;
-				if(pageOffset && i==8)
-					break;
-				//Load next Endpoint Descriptor
-				nextEndpoint();
-				if(p_endpoint){
-					buf_ptr = getEndpointDescriptorBuf(p_endpoint);
+				case 1:	//interface descriptor
 					pageOffset = EndpointDescriptor::s_size;
+					endptIdx = 0;
+					nextEndpoint();
+					if(!p_endpoint){
+						nextInterface();
+						if(!p_interface){
+							stateIdx = 0;
+							state = State::DEFAULT;
+						}
+						buf_ptr = getInterfaceDescriptorBuf(p_interface);
+						pageOffset = InterfaceDescriptor::s_size;
+						break;
+					}
+					buf_ptr = getEndpointDescriptorBuf(p_endpoint);
+					stateIdx++;
+					break;;
+				case 2:	//Endpoint Descriptor
+					//Load next Endpoint Descriptor
+					nextEndpoint();
+					if(p_endpoint){
+						buf_ptr = getEndpointDescriptorBuf(p_endpoint);
+						pageOffset = EndpointDescriptor::s_size;
+						break;
+					}
+					nextInterface();
+					if(p_interface){
+						buf_ptr = getInterfaceDescriptorBuf(p_interface);
+						pageOffset = InterfaceDescriptor::s_size;
+						stateIdx--;
+						break;
+					}
+					[[fallthrough]];
+				default: //If all else fails
+					state = State::DEFAULT;
+					stateIdx = 0;
 					break;
-				}
-				nextInterface();
-				if(p_interface){
-					buf_ptr = getInterfaceDescriptorBuf(p_interface);
-					pageOffset = InterfaceDescriptor::s_size;
-					stateIdx--;
-					break;
-				}
-				[[fallthrough]];
-			default:
-				state = State::DEFAULT;
-				stateIdx = 0;
-				break;
+			}
 		}
 	}while(i < 8 && state != State::DEFAULT && maxLength && pageOffset);
 
 	genPacket(getDataPID(), i);
-
-
-	//foreach interface descriptor
-		//loadInterfaceDescriptor
-		//foreach endpoint descriptor
-			//loadEndpointDescriptor
-
+	if(i < 8) resetState();
 }
 
 void Endpoint0::loadStringDescriptor()
@@ -315,9 +302,12 @@ void Endpoint0::loadStringDescriptor()
 	case 1:
 		for(;i < 8 && pageOffset && maxLength; i++, pageOffset--, maxLength--)
 			txBuf[i] = *buf_ptr++;
-		if(!pageOffset || !maxLength)
-			state = State::DEFAULT;
+		// if(!pageOffset || !maxLength)
+		if(i == 8)
+			break;
+		[[fallthrough]];
 	default:
+		state = State::DEFAULT;
 		break;
 	}
 	genPacket(getDataPID(), i);
@@ -325,17 +315,12 @@ void Endpoint0::loadStringDescriptor()
 
 void Endpoint0::nextInterface()
 {
-	const Interface *p_if;
-	p_if = getInterface(p_configuration, intfIdx, altIdx++);
-	if(p_if){
-		p_interface = p_if;
-		return;
-	}
+	p_interface = getInterface(p_configuration, intfIdx, altIdx++);
+	if(p_interface) return;
 	altIdx = 0;
 	intfIdx++;
-	p_if = getInterface(p_configuration, intfIdx, altIdx++);
-	p_interface = p_if;
-	if(!p_if){
+	p_interface = getInterface(p_configuration, intfIdx, altIdx++);
+	if(!p_interface){
 		intfIdx = 0;
 		altIdx = 0;
 	}

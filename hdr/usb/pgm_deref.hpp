@@ -112,7 +112,7 @@ namespace AVR::USB
 		return tbl.string(idx);
 	}
 
-	constexpr const AVR::USB::StringDescriptorTable* getStringTable(const Device *dev, LanguageID lang = LanguageID::English_United_States)
+	constexpr const AVR::USB::StringDescriptorTable* getStringTable(const Device *dev, LanguageID /* lang */ = LanguageID::English_United_States)
 	{
 		AVR::pgm_ptr<const AVR::USB::StringDescriptorTable*> _ptr{&dev->m_strings};
 		return *_ptr;
