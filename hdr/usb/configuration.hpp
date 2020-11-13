@@ -10,7 +10,7 @@ namespace AVR::USB
 	/**
 	 * 
 	 *	ConfigurationAttributes _bmAttributes
-	 *	const std::constexpr_vector_c<const std::constexpr_vector_c<const Interface*, m>*, n> *_interfaces
+	 *	const std::constexpr_vector<const std::constexpr_vector<const Interface*, m>*, n> *_interfaces
 	 *	uint8_t _bConfigurationValue
 	 * 
 	 */

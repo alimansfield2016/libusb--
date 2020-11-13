@@ -16,7 +16,7 @@ namespace AVR::USB
 	 * InterfaceClass _bInterfaceClass
 	 * uint8_t _bInterfaceSubClass
 	 * uint8_t _bInterfaceProtocol
-	 * const std::constexpr_vector_c<Endpoint*, n> *_endpoints
+	 * const std::constexpr_vector<Endpoint*, n> *_endpoints
 	 * uint8_t _bInterfaceNumber
 	 * uint8_t _bAlternateSetting
 	 * 

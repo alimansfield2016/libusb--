@@ -152,11 +152,11 @@ clean:
 	rm -rf ${ASMDIR}/ ${OBJDIR}/ ${PROGRAM}*
 
 size: ${PROGRAM}.${BINEXT}
-	avr-size $<
+	avr-size --mcu=${MCU} -C $<
 
 size_boot: ${PROGRAM}.${BOOTEXT}
-	avr-size $<
-
+	avr-size --mcu=${MCU} -C $<
+	
 nm: ${PROGRAM}.${BINEXT}
 	avr-nm -C -S --size-sort -t d $<
 
