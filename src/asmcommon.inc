@@ -52,10 +52,10 @@ ignorePacket:
 ;This is the only non-error exit point for the software receiver loop
 ;we don't check any CRCs here because there is no time left.
 se0:
-    subi    cnt, USB_BUFSIZE    ;[5]
-    neg     cnt                 ;[6]
-    sub     YL, cnt             ;[7]
-    sbci    YH, 0               ;[8]
+    subi    cnt, USB_BUFSIZE    ;[5]	count -= 11
+    neg     cnt                 ;[6]	count = -count
+    sub     YL, cnt             ;[7]	buf += (-)-count(-11)
+    sbci    YH, 0               ;[8]	Y = usbRxBux + usbRxBufOffset;
     ldi     x2, 1<<USB_INTR_PENDING_BIT ;[9]
     USB_STORE_PENDING(x2)       ;[10] clear pending intr and check flag later. SE0 should be over.
     ld      token, y            ;[11]
@@ -74,26 +74,26 @@ se0:
     ldd     x3, y+2             ;[24] endpoint number + crc
     rol     x3                  ;[26] shift in LSB of endpoint
     andi	x3, 0x0F			;[27] 
-    sts		usbEndptNo, x3		;[28] indicate that this is endpoint x
-    cpi     token, USBPID_IN    ;[30]
-    breq    handleIn            ;[31]
-    cpi     token, USBPID_SETUP ;[32]
-    breq    handleSetupOrOut    ;[33]
-    cpi     token, USBPID_OUT   ;[34]
-    brne    ignorePacket        ;[35] must be ack, nak or whatever
+    cpi     token, USBPID_IN    ;[28]
+    breq    handleIn            ;[29]
+    cpi     token, USBPID_SETUP ;[30]
+    breq    handleSetupOrOut    ;[31]
+    cpi     token, USBPID_OUT   ;[32]
+    brne    ignorePacket        ;[33] must be ack, nak or whatever
 ;   rjmp    handleSetupOrOut    ; fallthrough
 
 ;Setup and Out are followed by a data packet two bit times (16 cycles) after
 ;the end of SE0. The sync code allows up to 40 cycles delay from the start of
 ;the sync pattern until the first bit is sampled. That's a total of 56 cycles.
 handleSetupOrOut:               ;[36] May start as late as cycle 36
+    sts		usbEndptNoBegin, x3	;[36] indicate that this is endpoint x
 storeTokenAndReturn:
-    sts     usbCurrentTok, token;[36]
+    sts     usbCurrentTok, token;[38]
 doReturn:
-    POP_STANDARD                ;[38] 12...16 cycles
-    USB_LOAD_PENDING(YL)        ;[50]
-    sbrc    YL, USB_INTR_PENDING_BIT;[51] check whether data is already arriving
-    rjmp    waitForJ            ;[52] save the pops and pushes -- a new interrupt is already pending
+    POP_STANDARD                ;[40] 12...16 cycles
+    USB_LOAD_PENDING(YL)        ;[52]
+    sbrc    YL, USB_INTR_PENDING_BIT;[53] check whether data is already arriving
+    rjmp    waitForJ            ;[54] save the pops and pushes -- a new interrupt is already pending
 sofError:
 pop_reti_handle:
 	lds		YL, usbTransactionEnd;
@@ -128,16 +128,19 @@ handleData:
     sts     usbRxLen, cnt       ;[28] store received data, swap buffers
     sts     usbRxToken, shift   ;[30]
     lds     x2, usbInputBufOffset;[32] swap buffers
-    ldi     cnt, USB_BUFSIZE    ;[34]
-    sub     cnt, x2             ;[35]
+    ldi     cnt, USB_BUFSIZE    ;[34]	cnt = USB_BUFSIZE = 11
+    sub     cnt, x2             ;[35]	cnt -= usbInputBufOffset
     sts     usbInputBufOffset, cnt;[36] buffers now swapped
-    rjmp    sendAckAndReti      ;[38] 40 + 17 = 57 until SOP
+								;	usbInputBufOffset = 11-usbInputBufOffset
+
+	lds		x3, usbEndptNoBegin	;[38]
+	sts		usbEndptNoData, x3	;[40]
+
+    rjmp    sendAckAndReti      ;[42] 44 + 19 = 63 until SOP. 
+	; WERE CURRENTLY 7 CYCLES OVER SPEC!
 
 handleIn:						;[33]
-;We don't send any data as long as the C code has not processed the current
-;input data and potentially updated the output data. That's more efficient
-;in terms of code size than clearing the tx buffers when a packet is received.
-	sts		usbCurrentTok, token;[33] 2
+	sts		usbCurrentTok, token;[33] 
     lsl		x3					;[35] double EndpointNo as uint8_t*[] index
     clr		x2					;[36]
     ldi		YL, lo8(usbTxLenBufs);[37] Load usbTxLenBufs pointer
@@ -159,54 +162,3 @@ handleIn:						;[33]
     inc		cnt					;[53]
     rjmp	usbSendAndReti		;[54]
     
-
-    ; lds     x1, usbRxLen        ;[30]
-    ; cpi     x1, 1               ;[32] negative values are flow control, 0 means "buffer free"
-    ; brge    sendNakAndReti      ;[33] unprocessed input packet?
-    ; ldi     x1, USBPID_NAK      ;[34] prepare value for usbTxLen
-    ; andi    x3, 0xf             ;[35] x3 contains endpoint
-    ; brne    sendNakAndReti      ;[36]
-    ; brne    handleIn1           ;[36]
-    ; lds     cnt, usbTxLen       ;[37]
-    ; sbrc    cnt, 4              ;[39] all handshake tokens have bit 4 set
-    ; rjmp    sendCntAndReti      ;[40] 42 + 16 = 58 until SOP
-    ; sts     usbTxLen, x1        ;[41] x1 == USBPID_NAK from above
-    ; ldi     YL, lo8(usbTxBuf)   ;[43]
-    ; ldi     YH, hi8(usbTxBuf)   ;[44]
-    ; rjmp    usbSendAndReti      ;[45] 57 + 12 = 59 until SOP
-
-; Comment about when to set usbTxLen to USBPID_NAK:
-; We should set it back when we receive the ACK from the host. This would
-; be simple to implement: One static variable which stores whether the last
-; tx was for endpoint 0 or 1 and a compare in the receiver to distinguish the
-; ACK. However, we set it back immediately when we send the package,
-; assuming that no error occurs and the host sends an ACK. We save one byte
-; RAM this way and avoid potential problems with endless retries. The rest of
-; the driver assumes error-free transfers anyway.
-
-; #if !USB_CFG_SUPPRESS_INTR_CODE && USB_CFG_HAVE_INTRIN_ENDPOINT /* placed here due to relative jump range */
-; handleIn1:                      ;[38]
-; #if USB_CFG_HAVE_INTRIN_ENDPOINT3
-; ; 2006-06-10 as suggested by O.Tamura: support second INTR IN / BULK IN endpoint
-;     cpi     x3, USB_CFG_EP3_NUMBER;[38]
-;     breq    handleIn3           ;[39]
-; #endif
-;     lds     cnt, usbTxLen1      ;[40]
-;     sbrc    cnt, 4              ;[42] all handshake tokens have bit 4 set
-;     rjmp    sendCntAndReti      ;[43] 47 + 16 = 63 until SOP
-;     sts     usbTxLen1, x1       ;[44] x1 == USBPID_NAK from above
-;     ldi     YL, lo8(usbTxBuf1)  ;[46]
-;     ldi     YH, hi8(usbTxBuf1)  ;[47]
-;     rjmp    usbSendAndReti      ;[48] 50 + 12 = 62 until SOP
-
-; #if USB_CFG_HAVE_INTRIN_ENDPOINT3
-; handleIn3:
-;     lds     cnt, usbTxLen3      ;[41]
-;     sbrc    cnt, 4              ;[43]
-;     rjmp    sendCntAndReti      ;[44] 49 + 16 = 65 until SOP
-;     sts     usbTxLen3, x1       ;[45] x1 == USBPID_NAK from above
-;     ldi     YL, lo8(usbTxBuf3)  ;[47]
-;     ldi     YH, hi8(usbTxBuf3)  ;[48]
-;     rjmp    usbSendAndReti      ;[49] 51 + 12 = 63 until SOP
-; #endif
-; #endif

@@ -1,12 +1,22 @@
 #pragma once
 
+namespace AVR::USB
+{
+	class Descriptor;
+	class DeviceDescriptor;
+	class ConfigurationDescriptor;
+	class InterfaceDescriptor;
+	class EndpointDescriptor;
+	class StringDescriptorTable;
+} // namespace AVR::USB
+
+
 #include <usb/libusb++.hpp>
 #include <usb/endpoint.hpp>
 
 #include <avr/memory/pgmspace.hpp>
 
 #include <utility>
-#include <array>
 
 namespace AVR::USB
 {
@@ -14,14 +24,12 @@ namespace AVR::USB
 	{
 		public:
 		constexpr const uint8_t *ptr() const { return static_cast<const uint8_t*>(static_cast<const void*>(this)); }
-		constexpr AVR::pgm_ptr<uint8_t> ptr_pgm() const { return ptr(); }
-		// uint8_t bLength() const { return ptr()[0]; };
-		// DescriptorType bDescriptorType() const { return static_cast<DescriptorType>(ptr()[1]); };
+		constexpr AVR::pgm_ptr<uint8_t> ptr_pgm() const { return AVR::pgm_ptr{ptr()}; }
 		protected:
 		constexpr Descriptor() { }
 	};
 
-	class DeviceDescriptor : public Descriptor
+	class DeviceDescriptor final : public Descriptor
 	{
 		const uint8_t m_buf[18];
 		public:
@@ -59,7 +67,7 @@ namespace AVR::USB
 				static_cast<uint8_t>(_iProduct),
 				static_cast<uint8_t>(_iSerialNumber),
 				static_cast<uint8_t>(_bNumConfigurations),
-			} {}
+			} { }
 		USB_BCD bcdUSB() { return static_cast<USB_BCD>(m_buf[2] | m_buf[3]<<8); }
 		DeviceClass bDeviceClass() { return static_cast<DeviceClass>(m_buf[4]); }
 		uint8_t bSubDeviceClass() { return static_cast<uint8_t>(m_buf[5]); }
@@ -74,7 +82,7 @@ namespace AVR::USB
 		uint8_t numConfigurations() { return static_cast<uint8_t>(m_buf[17]); }
 	};
 
-	class ConfigurationDescriptor : public Descriptor
+	class ConfigurationDescriptor final : public Descriptor
 	{
 		const uint8_t m_buf[9];
 	public:
@@ -106,7 +114,7 @@ namespace AVR::USB
 		Power bMaxPower() const { return static_cast<Power>(m_buf[8]); };
 	};
 
-	class InterfaceDescriptor : public Descriptor
+	class InterfaceDescriptor final : public Descriptor
 	{
 		const uint8_t m_buf[9];
 	public:
@@ -141,7 +149,7 @@ namespace AVR::USB
 		uint8_t iInterface() { return static_cast<uint8_t>(m_buf[8]); }
 	};
 
-	class EndpointDescriptor : public Descriptor
+	class EndpointDescriptor final : public Descriptor
 	{
 		const uint8_t m_buf[7];
 	public:
@@ -169,7 +177,7 @@ namespace AVR::USB
 				static_cast<uint8_t>(0x08),
 				static_cast<uint8_t>(0x00),
 				_bInterval
-			} {}
+			} { }
 	};
 
 	enum class LanguageID : uint16_t{
@@ -362,61 +370,44 @@ namespace AVR::USB
 		Zulu = 1077,
 	};
 
-	// class String
-	// {
-	// 	//map <language_id, PROGMEM const char*>
-	// 	std::constexpr_vector<std::pair<LanguageID, const char*>> m_strings;
-	// public:
-	// 	constexpr String(){}
-	// };
-
 	using char_t = wchar_t;
 
 	class StringDescriptorTable
 	{
-		// std::constexpr_vector<std::constexpr_vector<std::pair<LanguageID, const char*>>*> *m_Strings;
-		// std::constexpr_vector<LanguageID> *m_Languages;
-		// uint8_t m_numLanguages;
+		friend class Endpoint0;
 	public:
 		using Str = std::pair<uint8_t, const wchar_t*>;
-		using Arr = std::constexpr_vector<const Str*>;
-		const Arr *m_strings;
+		using Arr = AVR::pgm_span<Str>;
+	private:
+		const Arr m_strings;
 		const LanguageID m_language;
+	public:
 
 		constexpr StringDescriptorTable(
 			LanguageID _language, 
-			const Arr *_strings
+			const Arr _strings
 		) : 
 			m_strings{_strings}, 
 			m_language{_language} {}
 			
 		constexpr Str stringPgmThis(uint8_t idx) const {
 			AVR::pgm_ptr _ptr{&m_strings};
-			AVR::pgm_ptr _arr{*_ptr};
-
-			AVR::pgm_ptr size{_arr->size_p()};
-			if(--idx >= *size)
+			auto _arr = *_ptr;
+			auto size = _arr.size();
+			if(--idx >= size)
 				return {0, nullptr};
-			AVR::pgm_ptr buf{_arr->begin()};
-			return *AVR::pgm_ptr{buf[idx]};
+			AVR::pgm_ptr buf{_arr.begin()};
+			return buf[idx];
 		}
 		constexpr Str string(uint8_t idx) const {
+			auto _arr = m_strings;
 
-			AVR::pgm_ptr _arr{m_strings};
-
-			AVR::pgm_ptr size{_arr->size_p()};
-			if(--idx >= *size)
+			auto size = _arr.size();
+			if(--idx >= size)
 				return {0, nullptr};
-			AVR::pgm_ptr buf{_arr->begin()};
-			return *AVR::pgm_ptr{buf[idx]};
+			AVR::pgm_ptr buf{_arr.begin()};
+			return buf[idx];
 		}
-	};
-
-	class StringDescriptor : public Descriptor
-	{
-	public:
-		constexpr StringDescriptor() :
-			Descriptor{} {}
 	};
 
 } // namespace AVR::USB

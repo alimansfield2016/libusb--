@@ -3,6 +3,7 @@
 #include <usb/libusb++.hpp>
 #include <usb/descriptor.hpp>
 #include <array>
+#include <usb/configuration.hpp>
 
 namespace AVR::USB
 {
@@ -12,14 +13,15 @@ namespace AVR::USB
 	public:
 
 		//Configurations
-		const std::constexpr_vector<const Configuration*> *m_configurations;
+		AVR::pgm_span<Configuration> m_configurations;
 
 		//Manufacturer string
 		//Product string
 		//Serial number string
-		const StringDescriptorTable *m_strings;
+		//etc
+		StringDescriptorTable m_strings;
 
-		const DeviceDescriptor m_descriptor;
+		DeviceDescriptor m_descriptor;
 
 		constexpr Device(
 			USB_BCD _bcdUSB,
@@ -30,8 +32,8 @@ namespace AVR::USB
 			uint8_t _bSubDeviceClass,
 			uint8_t _bDeviceProtocol,
 
-			const std::constexpr_vector<const Configuration*> *_configurations,
-			const StringDescriptorTable *_strings,
+			AVR::pgm_span<Configuration> _configurations,
+			StringDescriptorTable _strings,
 			uint8_t _iManufacturer = 0,
 			uint8_t _iProduct = 0,
 			uint8_t _iSerialNumber = 0
@@ -50,41 +52,39 @@ namespace AVR::USB
 				_iManufacturer,
 				_iProduct,
 				_iSerialNumber,
-				static_cast<uint8_t>(_configurations->size())
+				static_cast<uint8_t>(_configurations.size())
 			}
 			 {}
-		constexpr AVR::pgm_ptr<std::constexpr_vector<const Configuration*>> getConfigurationsPgm() const {
-			return AVR::pgm_ptr{m_configurations};
+		constexpr AVR::pgm_span<Configuration> getConfigurationsPgm() const {
+			return m_configurations;
 		}
-		constexpr AVR::pgm_ptr<std::constexpr_vector<const Configuration*>> getConfigurationsPgmThisPgm() const {
+		constexpr AVR::pgm_span<Configuration> getConfigurationsPgmThisPgm() const {
 			AVR::pgm_ptr ptr{&m_configurations};
-			return AVR::pgm_ptr{*ptr};
+			return *ptr;
 		}
 
 		constexpr AVR::pgm_ptr<Configuration> getConfigurationPgm(uint8_t idx) const
 		{
 			//PROGMEM
 			auto config = getConfigurationsPgm();
-			AVR::pgm_ptr size{config->size_p()};
-			if(idx >= *size) return nullptr;
+			if(idx >= config.size()) return AVR::pgm_ptr<Configuration>{nullptr};
 			//PROGMEM
-			AVR::pgm_ptr arr{config->begin()};
-			return arr[idx];
+			AVR::pgm_ptr arr{config.begin()};
+			return arr+idx;
 		}
 		constexpr AVR::pgm_ptr<Configuration> getConfigurationPgmThisPgm(uint8_t idx) const
 		{
 			//PROGMEM
 			auto config = getConfigurationsPgmThisPgm();
-			AVR::pgm_ptr size{config->size_p()};
-			if(idx >= *size) return nullptr;
+			if(idx >= config.size()) return AVR::pgm_ptr<Configuration>{nullptr};
 			//PROGMEM
-			AVR::pgm_ptr arr{config->begin()};
-			return arr[idx];
+			AVR::pgm_ptr arr{config.begin()};
+			return arr+idx;
 		}
 
 		constexpr AVR::pgm_ptr<uint8_t> getDescriptorBufPgm() const 
 		{
-			return m_descriptor.ptr();
+			return AVR::pgm_ptr{m_descriptor.ptr()};
 		}
 		constexpr AVR::pgm_ptr<uint8_t> getDescriptorBufPgmThisPgm() const 
 		{
@@ -93,8 +93,7 @@ namespace AVR::USB
 	
 		constexpr AVR::pgm_ptr<StringDescriptorTable> getStringTablePgmThisPgm() const
 		{
-			AVR::pgm_ptr _ptr{&m_strings};
-			AVR::pgm_ptr str_tbl{*_ptr};
+			AVR::pgm_ptr str_tbl{&m_strings};
 			return str_tbl;
 		}
 	};

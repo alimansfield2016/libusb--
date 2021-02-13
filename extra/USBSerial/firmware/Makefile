@@ -1,5 +1,5 @@
-PROGRAM = usb++
-PRJDIR = /home/ali/Projects/AVR/
+PROGRAM = USBserial
+PRJDIR = /home/ali/Projects/AVR
 
 MCU = atmega644p
 PARTNO = m644p
@@ -23,13 +23,11 @@ PROGRAMMER = C232HM
 
 SRC += ${shell find ${SRCDIR}/ -type f -name '*.${SRCEXT}'}
 CSRC += ${shell find ${SRCDIR}/ -type f -name '*.${CSRCEXT}'}
-ASMIN += ${shell find ${SRCDIR}/ -type f -name '*.${ASMEXT}'}
+ASM += ${shell find ${SRCDIR}/ -type f -name '*.${ASMEXT}'}
 
 OBJ += 	${SRC:${SRCDIR}/%.${SRCEXT}=${OBJDIR}/%.${OBJEXT}} \
 		${CSRC:${SRCDIR}/%.${CSRCEXT}=${OBJDIR}/%.${OBJEXT}} \
-		${ASMIN:${SRCDIR}/%.${ASMEXT}=${OBJDIR}/%.${OBJEXT}}
-
-ASM += ${SRC:${SRCDIR}/%.${SRCEXT}=${ASMDIR}/%.${ASMEXT}}
+		${ASM:${SRCDIR}/%.${ASMEXT}=${OBJDIR}/%.${OBJEXT}}
 
 WARNINGS += all \
 			pedantic \
@@ -42,7 +40,7 @@ OPTIMISATION = s
 DEFINES += 	__AVR_ATmega644P__ \
 			F_CPU=12000000 \
 			#ENABLE_INTERRUPTS 
-WHOLE_LIBRARIES += 
+WHOLE_LIBRARIES += usb++ multiprocess
 LIBRARIES += c++ c 
 #add any file for which only symbols - no code - should be included
 #IE to allow bootloader code from application
@@ -52,10 +50,12 @@ FLAGS_ALL = -mmcu=${MCU}
 
 INCLUDEPATH += ${PRJDIR}/libc++/include/ \
 				/usr/lib/avr/include/ \
-				${PRJDIR}/libusb++/include/
+				${PRJDIR}/libusb++/include/ \
+				${PRJDIR}/libmultiprocess/include/
 LIBDIR += . /usr/local/avr/lib/avr5/ \
 			${PRJDIR}/libc++/ \
-			${PRJDIR}/libusb++/
+			${PRJDIR}/libusb++/ \
+			${PRJDIR}/libmultiprocess/
 INC = ${INCLUDEPATH:%=-I%}
 LIB += 	${LIBDIR:%=-L%} \
 		${WHOLE_LIB_FLAGS} \
@@ -66,8 +66,8 @@ WHOLE_LIB_FLAGS =  	-Wl,--whole-archive \
 SYMBOLS_FLAGS = ${SYMBOLS:%=-Wl,-R%}
 
 
-CXX_COMPILE_FLAGS = ${FLAGS_ALL} -c -std=${STANDARD} ${WARNINGS:%=-W%} -O${OPTIMISATION} ${INC} ${DEFINES:%=-D%} #-ggdb 
-C_COMPILE_FLAGS =  ${FLAGS_ALL} -c ${WARNINGS:%=-W%} -O${OPTIMISATION} ${INC} ${DEFINES:%=-D%} #-ggdb 
+CXX_COMPILE_FLAGS = ${FLAGS_ALL} -c -std=${STANDARD} ${WARNINGS:%=-W%} -O${OPTIMISATION} ${INC} ${DEFINES:%=-D%} -ggdb 
+C_COMPILE_FLAGS =  ${FLAGS_ALL} -c ${WARNINGS:%=-W%} -O${OPTIMISATION} ${INC} ${DEFINES:%=-D%} -ggdb 
 ASSEMBLE_FLAGS = ${FLAGS_ALL} -c ${INC} ${DEFINES:%=-D%}
 ARCHIVE_FLAGS = rcs
 LINK_FLAGS = ${FLAGS_ALL} ${LIB}
@@ -90,9 +90,6 @@ debug_src:
 debug_obj:
 	@echo "OBJ:"
 	@echo ${OBJ}
-debug_asm:
-	@echo "ASM:"
-	@echo ${ASM}
 
 
 #Make object files!
@@ -116,10 +113,7 @@ ${OBJDIR}/%.${OBJEXT}: ${SRCDIR}/%.${ASMEXT}
 asm: ${ASM}
 ${ASMDIR}/%.${ASMEXT}: ${SRCDIR}/%.${SRCEXT}
 	@mkdir -p "${@D}"
-	${COMPILE} -S ${CXX_COMPILE_FLAGS} -o $@ $<
-${ASMDIR}/%.${ASMEXT}: ${SRCDIR}/%.${CSRCEXT}
-	@mkdir -p "${@D}"
-	${COMPILE} -S ${C_COMPILE_FLAGS} -o $@ $<
+	${COMPILE} -S ${COMPILE_FLAGS} -o $@ $<
 
 
 #make executeable file
@@ -131,7 +125,7 @@ ${PROGRAM}.${BOOTEXT}.${BINEXT}: ${OBJ}
 	${LINK}  -o $@ $^ ${BOOT_LINK_FLAGS}
 
 #make static library file
-lib${PROGRAM}.${LIBEXT} : ${OBJ}
+${PROGRAM}.${LIBEXT} : ${filter-out ${OBJDIR}/main.${OBJEXT}, ${OBJ}}
 	${ARCHIVE} ${ARCHIVE_FLAGS} $@ $^
 
 
@@ -145,7 +139,7 @@ ${PROGRAM}: ${PROGRAM}.${BINEXT}
 
 program: ${PROGRAM}.${BINEXT}
 bootloader: ${PROGRAM}.${BOOTEXT}.${BINEXT}
-lib: lib${PROGRAM}.${LIBEXT}
+lib: ${PROGRAM}.${LIBEXT}
 
 hex: ${PROGRAM}.${HEXEXT}
 boothex: ${PROGRAM}.${BOOTEXT}.${HEXEXT}

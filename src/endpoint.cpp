@@ -16,7 +16,7 @@ void EndpointIn::genPacket(PID pid, uint8_t dataLen)
 	txLenBuf[1] = static_cast<uint8_t>(pid);
 	usbCrc16Append(txLenBuf + 2, dataLen);
 	{
-		// AVR::Interrupt::InterruptHolder hold;
+		AVR::Interrupt::InterruptHolder hold;
 		txLenBuf[0] = dataLen+3;
 	}
 }

@@ -285,11 +285,9 @@ sendNakAndReti:                 ;0 [-19] 19 cycles until SOP
     ldi     x3, USBPID_NAK      ;1 [-18]
     rjmp    usbSendX3AndReti           ;2 [-16]
 sendAckAndReti:                 ;0 [-19] 19 cycles until SOP
-	ldi		x3, 1
-	sts		usbTransactionEnd, x3
-    ldi     cnt, USBPID_ACK      ;1 [-18]
-sendCntAndReti:                 ;0 [-17] 17 cycles until SOP
-    mov     x3, cnt             ;1 [-16]
+	ldi		x3, 1				;1 [-19]
+	sts		usbTransactionEnd, x3	;2 [-17]
+    ldi     x3, USBPID_ACK      ;1 [-16]
 usbSendX3AndReti:               ;0 [-16]
     ldi     YL, 20              ;1 [-15] 'x3' is R20
     ldi     YH, 0               ;1 [-14]

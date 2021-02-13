@@ -19,14 +19,13 @@ using namespace AVR;
 
 uint8_t usbDeviceAddr;
 uint8_t usbNewDeviceAddr;
-// uint8_t usbTxBuf[11];
-// volatile uint8_t usbTxLen;
 uint8_t usbRxBuf[USB_BUF_LEN*2];
 uint8_t usbRxLen;
 uint8_t usbRxToken;
 uint8_t usbCurrentTok;
 uint8_t usbInputBufOffset;
-volatile uint8_t usbEndptNo;
+volatile uint8_t usbEndptNoBegin;
+volatile uint8_t usbEndptNoData;
 
 uint8_t *usbTxLenBufs[MAX_ENDPTS];
 bool usbTransactionEnd;
@@ -34,7 +33,7 @@ bool usbTransactionEnd;
 std::array<USB::EndpointOut*, MAX_ENDPTS> EndpointsOut;
 std::array<USB::EndpointIn*, MAX_ENDPTS> EndpointsIn;
 
-const AVR::USB::Device *AVR::USB::pDevice{};
+AVR::pgm_ptr<AVR::USB::Device> AVR::USB::pDevice{nullptr};
 
 void USB::disconnect()
 {
@@ -56,10 +55,9 @@ void USB::connect()
 
 void USB::init(USB::Endpoint0 *endpoint0)
 {
-	// if(!pDevice) return;
 	reset();
 	//required pins will now be set.
-
+	DDRB |= 0x03;
 	//Enable interrupts
 	USB::INT_CFG = USB::INT_CFG_SET;
 	USB::INT_ENABLE = USB::INT_ENABLE_MASK;
@@ -109,10 +107,23 @@ void USB::reset()
 	connect();
 }
 
+bool USB::ready()
+{
+	return _endp0.configurationSet();
+}
+
 void __vector_transaction()
 {
+	static bool locked = false;
+	{
+		AVR::Interrupt::InterruptHolder hold;
+		if(locked) return;
+		locked = true;
+	}
+	PORTB &= ~_BV(1);
+	PORTB |= _BV(1);
 	using namespace USB;
-	EndpointOut *endpt = EndpointsOut[usbEndptNo];
+	EndpointOut *endpt = EndpointsOut[usbEndptNoData];
 	if(endpt) {
 		PID rxToken = static_cast<PID>(usbRxToken);
 		uint8_t *buf = usbRxBuf + USB_BUF_LEN - usbInputBufOffset;
@@ -131,10 +142,12 @@ void __vector_transaction()
 	}
 	else{
 		usbRxLen = 0;
-		return;
 	}
+	locked = false;
 
 	//update endpoint TX Buffers
 	for(auto endptIn : EndpointsIn)
 		if(endptIn && !endptIn->txLen())endptIn->in();
+
+	PORTB &= ~_BV(1);
 }

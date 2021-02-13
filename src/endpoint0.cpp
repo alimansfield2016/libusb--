@@ -5,6 +5,7 @@
 #include "libusb++_ext.hpp"
 
 #include <avr/io/io.hpp>
+#include <avr/io/serial.hpp>
 #include <avr/memory/pgmspace.hpp>
 
 using namespace AVR::USB;
@@ -30,11 +31,6 @@ constexpr AVR::USB::DeviceDescriptor PROGMEM deviceDescriptor {
 
 bool Endpoint0::setup(uint8_t *rxBuf, uint8_t &rxLen)
 {
-	// if(rxLen < 8) {
-	// 	rxLen = 0; 
-	// 	return;
-	// }
-
 	//We already know the format of the setup packet
 	//so we can index it with a struct
 
@@ -48,12 +44,12 @@ bool Endpoint0::setup(uint8_t *rxBuf, uint8_t &rxLen)
 	//rxBuf[1]
 	// RequestDirection direction = static_cast<RequestDirection>(bmRequestType>>7);
 	RequestRecipient recipient = static_cast<RequestRecipient>(bmRequestType&0x1F);
-	RequestType type = static_cast<RequestType>((bmRequestType>>5)&0x03);
+	m_reqType = static_cast<RequestType>((bmRequestType>>5)&0x03);
 	//rxBuf[2]
 	Request request = static_cast<Request>(bRequest);
 
 	setDataPID(PID::DATA1);
-	if(type != RequestType::Standard)
+	if(m_reqType != RequestType::Standard)
 		return false;
 	rxLen = 0;
 	switch (request)
@@ -93,9 +89,9 @@ bool Endpoint0::setup(uint8_t *rxBuf, uint8_t &rxLen)
 bool Endpoint0::out(uint8_t *rxBuf, uint8_t &rxLen, bool _setup)
 {
 	if(_setup) 
-		return setup(rxBuf, rxLen);
+		return Endpoint0::setup(rxBuf, rxLen);
 
-	rxLen = 0;
+	// rxLen = 0;
 	return false;
 }
 
@@ -129,18 +125,14 @@ void Endpoint0::setDeviceAddr(uint8_t addr)
 
 void Endpoint0::setConfiguration(uint8_t config)
 {
+	//Configuration index starts at 1!
+	--config;
+	USART0.Print('C');
 	// resetState();
-	genPacket(getDataPID(), 0);
 
 	//setup relevant endpoints.
 	p_configuration = getConfiguration(pDevice, config);
 	intfIdx = 0;
-	// // Clear previous endpoints. (Should not be necessary since host *Should* leave them be)
-	// for(uint8_t i = 1; i < MAX_ENDPTS; i++){
-	// 	EndpointsIn[i] = nullptr;
-	// 	EndpointsOut[i] = nullptr;
-	// 	usbTxLenBufs[i] = nullptr;
-	// }
 	while((p_interface = getInterface(p_configuration, intfIdx++)))
 	{
 		endptIdx = 0;
@@ -156,7 +148,9 @@ void Endpoint0::setConfiguration(uint8_t config)
 			}
 		}
 	}
-	
+	USART0.Print('c');
+	m_configurationSet = true;
+	genPacket(getDataPID(), 0);
 
 }
 
