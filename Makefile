@@ -1,5 +1,4 @@
 PROGRAM = usb++
-PRJDIR = /home/ali/Projects/AVR/
 
 MCU = atmega644p
 PARTNO = m644p
