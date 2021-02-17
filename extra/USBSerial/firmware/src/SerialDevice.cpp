@@ -4,7 +4,7 @@
 #include <usb/endpoint.hpp>
 #include <usb/descriptor.hpp>
 
-#include "include/SerialEndpoint.hpp"
+#include "../include/USBSerial.hpp"
 #include "include/SerialDevice.hpp"
 
 using namespace AVR::USB;
@@ -66,8 +66,8 @@ const Interface AVR::USBSerial::pgmInterface##itfno##Alt0 PROGMEM{	\
 	InterfaceClass::ApplicationSpecific,		\
 	0,											\
 	0,											\
-	pgmEndpoints##itfno,							\
-	itfno,											\
+	pgmEndpoints##itfno,						\
+	itfno,										\
 	0,											\
 	4											\
 };												\
@@ -80,103 +80,95 @@ USBSERIAL_ENDPT_DESC(num, eptNo, delay)			\
 USBSERIAL_ENDPTS(num, itfNo)					\
 USBSERIAL_INTF(num, itfNo)
 
-#ifndef NUM_USBSERIAL
-#define NUM_USBSERIAL 0
+#define USBSERIAL_DELAY 4
+#if (NUM_USBSERIAL) >= 1
+USBSERIAL(0, USBSERIAL_DELAY, 1, 0)
 #endif
-
-#define USBSERIAL_DELAY 10
-
-#if (NUM_USBSERIAL) > 0
-	USBSERIAL(0, USBSERIAL_DELAY, 1, 0)
+#if (NUM_USBSERIAL) >= 2
+USBSERIAL(1, USBSERIAL_DELAY, 2, 1)
 #endif
-#if (NUM_USBSERIAL) > 1
-	USBSERIAL(1, USBSERIAL_DELAY, 2, 1)
+#if (NUM_USBSERIAL) >= 3
+USBSERIAL(2, USBSERIAL_DELAY, 3, 2)
 #endif
-#if (NUM_USBSERIAL) > 2
-	USBSERIAL(2, USBSERIAL_DELAY, 3, 2)
+#if (NUM_USBSERIAL) >= 4
+USBSERIAL(3, USBSERIAL_DELAY, 4, 3)
 #endif
-#if (NUM_USBSERIAL) > 3
-	USBSERIAL(3, USBSERIAL_DELAY, 4, 3)
+#if (NUM_USBSERIAL) >= 5
+USBSERIAL(4, USBSERIAL_DELAY, 5, 4)
 #endif
-#if (NUM_USBSERIAL) > 4
-	USBSERIAL(4, USBSERIAL_DELAY, 5, 4)
+#if (NUM_USBSERIAL) >= 6
+USBSERIAL(5, USBSERIAL_DELAY, 6, 5)
 #endif
-#if (NUM_USBSERIAL) > 5
-	USBSERIAL(5, USBSERIAL_DELAY, 6, 5)
+#if (NUM_USBSERIAL) >= 7
+USBSERIAL(6, USBSERIAL_DELAY, 7, 6)
 #endif
-#if (NUM_USBSERIAL) > 6
-	USBSERIAL(6, USBSERIAL_DELAY, 7, 6)
+#if (NUM_USBSERIAL) >= 8
+USBSERIAL(7, USBSERIAL_DELAY, 8, 7)
 #endif
-#if (NUM_USBSERIAL) > 7
-	USBSERIAL(7, USBSERIAL_DELAY, 8, 7)
+#if (NUM_USBSERIAL) >= 9
+USBSERIAL(8, USBSERIAL_DELAY, 9, 8)
 #endif
-#if (NUM_USBSERIAL) > 8
-	USBSERIAL(8, USBSERIAL_DELAY, 9, 8)
+#if (NUM_USBSERIAL) >= 10
+USBSERIAL(9, USBSERIAL_DELAY, 10, 9)
 #endif
-#if (NUM_USBSERIAL) > 9
-	USBSERIAL(9, USBSERIAL_DELAY, 10, 9)
+#if (NUM_USBSERIAL) >= 11
+USBSERIAL(10, USBSERIAL_DELAY, 11, 10)
 #endif
-#if (NUM_USBSERIAL) > 10
-	USBSERIAL(10, USBSERIAL_DELAY, 11, 10)
+#if (NUM_USBSERIAL) >= 12
+USBSERIAL(11, USBSERIAL_DELAY, 12, 11)
 #endif
-#if (NUM_USBSERIAL) > 11
-	USBSERIAL(11, USBSERIAL_DELAY, 12, 11)
+#if (NUM_USBSERIAL) >= 13
+USBSERIAL(12, USBSERIAL_DELAY, 13, 12)
 #endif
-#if (NUM_USBSERIAL) > 12
-	USBSERIAL(12, USBSERIAL_DELAY, 13, 12)
+#if (NUM_USBSERIAL) >= 14
+USBSERIAL(13, USBSERIAL_DELAY, 14, 13)
 #endif
-#if (NUM_USBSERIAL) > 13
-	USBSERIAL(13, USBSERIAL_DELAY, 14, 13)
-#endif
-#if (NUM_USBSERIAL) > 14
-	USBSERIAL(14, USBSERIAL_DELAY, 15, 14)
+#if (NUM_USBSERIAL) >= 15
+USBSERIAL(14, USBSERIAL_DELAY, 15, 14)
 #endif
 
 
 const AVR::pgm_array<AVR::pgm_span<Interface>, NUM_USBSERIAL> AVR::USBSerial::pgmInterfaces PROGMEM{{
-	#if (NUM_USBSERIAL) > 0
+	#if (NUM_USBSERIAL) >= 1
 	 pgmInterface0
 	#endif
-	#if (NUM_USBSERIAL) > 1
+	#if (NUM_USBSERIAL) >= 2
 	,pgmInterface1
 	#endif
-	#if (NUM_USBSERIAL) > 2
+	#if (NUM_USBSERIAL) >= 3
 	,pgmInterface2
 	#endif
-	#if (NUM_USBSERIAL) > 3
+	#if (NUM_USBSERIAL) >= 4
 	,pgmInterface3
 	#endif
-	#if (NUM_USBSERIAL) > 4
+	#if (NUM_USBSERIAL) >= 5
 	,pgmInterface4
 	#endif
-	#if (NUM_USBSERIAL) > 5
+	#if (NUM_USBSERIAL) >= 6
 	,pgmInterface5
 	#endif
-	#if (NUM_USBSERIAL) > 6
+	#if (NUM_USBSERIAL) >= 7
 	,pgmInterface6
 	#endif
-	#if (NUM_USBSERIAL) > 7
+	#if (NUM_USBSERIAL) >= 8
 	,pgmInterface7
 	#endif
-	#if (NUM_USBSERIAL) > 8
+	#if (NUM_USBSERIAL) >= 9
 	,pgmInterface8
 	#endif
-	#if (NUM_USBSERIAL) > 9
+	#if (NUM_USBSERIAL) >= 10
 	,pgmInterface9
 	#endif
-	#if (NUM_USBSERIAL) > 10
+	#if (NUM_USBSERIAL) >= 11
 	,pgmInterface10
 	#endif
-	#if (NUM_USBSERIAL) > 11
+	#if (NUM_USBSERIAL) >= 12
 	,pgmInterface11
 	#endif
-	#if (NUM_USBSERIAL) > 12
+	#if (NUM_USBSERIAL) >= 13
 	,pgmInterface12
 	#endif
-	#if (NUM_USBSERIAL) > 13
-	,pgmInterface13
-	#endif
-	#if (NUM_USBSERIAL) > 14
+	#if (NUM_USBSERIAL) >= 15
 	,pgmInterface14
 	#endif
 }};
@@ -186,8 +178,7 @@ const Configuration AVR::USBSerial::pgmConfiguration0 PROGMEM{
 	pgmInterfaces,
 	1
 };
-
-const AVR::pgm_array<Configuration, 1> AVR::USBSerial::pgmConfigurations PROGMEM{{
+const AVR::pgm_array<Configuration, 1> AVR::USBSerial::pgmConfigurations PROGMEM {{
 	pgmConfiguration0
 }};
 

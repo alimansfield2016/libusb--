@@ -3,3 +3,9 @@
 **/*.a
 **/*.hex
 **/obj/
+**/Module.symvers
+**/modules.order
+**/*.ko
+**/*.cmd
+**/*.mod
+**/*.mod.*

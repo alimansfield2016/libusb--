@@ -1,4 +1,4 @@
-PROGRAM = USBserial
+PROGRAM = USBSerial
 
 MCU = atmega644p
 PARTNO = m644p
@@ -22,11 +22,14 @@ PROGRAMMER = C232HM
 
 SRC += ${shell find ${SRCDIR}/ -type f -name '*.${SRCEXT}'}
 CSRC += ${shell find ${SRCDIR}/ -type f -name '*.${CSRCEXT}'}
-ASM += ${shell find ${SRCDIR}/ -type f -name '*.${ASMEXT}'}
+ASMSRC += ${shell find ${SRCDIR}/ -type f -name '*.${ASMEXT}'}
 
 OBJ += 	${SRC:${SRCDIR}/%.${SRCEXT}=${OBJDIR}/%.${OBJEXT}} \
 		${CSRC:${SRCDIR}/%.${CSRCEXT}=${OBJDIR}/%.${OBJEXT}} \
-		${ASM:${SRCDIR}/%.${ASMEXT}=${OBJDIR}/%.${OBJEXT}}
+		${ASMSRC:${SRCDIR}/%.${ASMEXT}=${OBJDIR}/%.${OBJEXT}}
+
+ASM += 	${SRC:${SRCDIR}/%.${SRCEXT}=${ASMDIR}/%.${ASMEXT}} \
+		${CSRC:${SRCDIR}/%.${CSRCEXT}=${ASMDIR}/%.${ASMEXT}}
 
 WARNINGS += all \
 			pedantic \
@@ -38,16 +41,17 @@ STANDARD = c++20
 OPTIMISATION = s
 DEFINES += 	__AVR_ATmega644P__ \
 			F_CPU=12000000 \
-			#ENABLE_INTERRUPTS 
-WHOLE_LIBRARIES += usb++ multiprocess
-LIBRARIES += c++ c 
+			${CUSTOM_DEFINES}
+WHOLE_LIBRARIES += multiprocess
+LIBRARIES += usb++ c++ c 
 #add any file for which only symbols - no code - should be included
 #IE to allow bootloader code from application
 SYMBOLS += 
 
 FLAGS_ALL = -mmcu=${MCU}
 
-INCLUDEPATH += ${PRJDIR}/libc++/include/ \
+INCLUDEPATH += ./ \
+				${PRJDIR}/libc++/include/ \
 				/usr/lib/avr/include/ \
 				${PRJDIR}/libusb++/include/ \
 				${PRJDIR}/libmultiprocess/include/
@@ -65,8 +69,8 @@ WHOLE_LIB_FLAGS =  	-Wl,--whole-archive \
 SYMBOLS_FLAGS = ${SYMBOLS:%=-Wl,-R%}
 
 
-CXX_COMPILE_FLAGS = ${FLAGS_ALL} -c -std=${STANDARD} ${WARNINGS:%=-W%} -O${OPTIMISATION} ${INC} ${DEFINES:%=-D%} -ggdb 
-C_COMPILE_FLAGS =  ${FLAGS_ALL} -c ${WARNINGS:%=-W%} -O${OPTIMISATION} ${INC} ${DEFINES:%=-D%} -ggdb 
+CXX_COMPILE_FLAGS = ${FLAGS_ALL} -c -std=${STANDARD} ${WARNINGS:%=-W%} -O${OPTIMISATION} ${INC} ${DEFINES:%=-D%} #-ggdb 
+C_COMPILE_FLAGS =  ${FLAGS_ALL} -c ${WARNINGS:%=-W%} -O${OPTIMISATION} ${INC} ${DEFINES:%=-D%} #-ggdb 
 ASSEMBLE_FLAGS = ${FLAGS_ALL} -c ${INC} ${DEFINES:%=-D%}
 ARCHIVE_FLAGS = rcs
 LINK_FLAGS = ${FLAGS_ALL} ${LIB}
@@ -112,7 +116,10 @@ ${OBJDIR}/%.${OBJEXT}: ${SRCDIR}/%.${ASMEXT}
 asm: ${ASM}
 ${ASMDIR}/%.${ASMEXT}: ${SRCDIR}/%.${SRCEXT}
 	@mkdir -p "${@D}"
-	${COMPILE} -S ${COMPILE_FLAGS} -o $@ $<
+	${COMPILE} -S ${CXX_COMPILE_FLAGS} -o $@ $<
+${ASMDIR}/%.${ASMEXT}: ${SRCDIR}/%.${CSRCEXT}
+	@mkdir -p "${@D}"
+	${COMPILE} -S ${C_COMPILE_FLAGS} -o $@ $<
 
 
 #make executeable file
@@ -124,7 +131,7 @@ ${PROGRAM}.${BOOTEXT}.${BINEXT}: ${OBJ}
 	${LINK}  -o $@ $^ ${BOOT_LINK_FLAGS}
 
 #make static library file
-${PROGRAM}.${LIBEXT} : ${filter-out ${OBJDIR}/main.${OBJEXT}, ${OBJ}}
+lib${PROGRAM}.${LIBEXT} : ${filter-out ${OBJDIR}/main.${OBJEXT}, ${OBJ}}
 	${ARCHIVE} ${ARCHIVE_FLAGS} $@ $^
 
 
@@ -138,7 +145,7 @@ ${PROGRAM}: ${PROGRAM}.${BINEXT}
 
 program: ${PROGRAM}.${BINEXT}
 bootloader: ${PROGRAM}.${BOOTEXT}.${BINEXT}
-lib: ${PROGRAM}.${LIBEXT}
+lib: lib${PROGRAM}.${LIBEXT}
 
 hex: ${PROGRAM}.${HEXEXT}
 boothex: ${PROGRAM}.${BOOTEXT}.${HEXEXT}
@@ -150,7 +157,7 @@ bootload: ${PROGRAM}.${BOOTEXT}.${HEX}
 	avrdude -c ${PROGRAMMER} -p ${PARTNO} -U flash:w:$<
 
 clean:
-	rm -rf ${ASMDIR}/ ${OBJDIR}/ ${PROGRAM}*
+	rm -rf ${ASMDIR}/ ${OBJDIR}/ *${PROGRAM}.*
 
 size: ${PROGRAM}.${BINEXT}
 	avr-size --mcu=${MCU} -C $<

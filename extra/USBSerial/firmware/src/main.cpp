@@ -2,7 +2,7 @@
 #include <avr/interrupt/interrupt.hpp>
 
 #include "include/SerialDevice.hpp"
-#include "include/SerialEndpoint.hpp"
+#include "include/USBSerial.hpp"
 
 #include <avr/io/serial.hpp>
 #include <multiprocess/process.hpp>
