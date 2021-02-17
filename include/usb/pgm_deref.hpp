@@ -25,10 +25,10 @@ namespace AVR::USB
 		return itf->m_descriptor.ptr_pgm();
 	}
 	
-	constexpr AVR::pgm_ptr<uint8_t> getEndpointDescriptorBuf(const Endpoint *ept)
-	{
-		return ept->m_descriptor->ptr_pgm();
-	}
+	// constexpr AVR::pgm_ptr<uint8_t> getEndpointDescriptorBuf(const Endpoint *ept)
+	// {
+	// 	return ept->m_descriptor->ptr_pgm();
+	// }
 
 
 	constexpr AVR::pgm_ptr<Configuration> getConfiguration(AVR::pgm_ptr<Device> dev, uint8_t idx = 0)
@@ -81,11 +81,9 @@ namespace AVR::USB
 	{
 		//if out of range, return nullptr
 		pgm_span endpoints = *pgm_ptr{&itf->m_endpoints};
-		// AVR::pgm_ptr size{endpoints->size_p()};
 		auto size = endpoints.size();
 		if(idx >= size) return nullptr;
 
-		// AVR::pgm_ptr arr{*AVR::pgm_ptr{endpoints->p_ptr()}};
 		AVR::pgm_ptr arr{endpoints.begin()};
 		if(arr)
 			return arr[idx];

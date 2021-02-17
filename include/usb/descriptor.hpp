@@ -12,7 +12,7 @@ namespace AVR::USB
 
 
 #include <usb/libusb++.hpp>
-#include <usb/endpoint.hpp>
+// #include <usb/endpoint.hpp>
 
 #include <avr/memory/pgmspace.hpp>
 

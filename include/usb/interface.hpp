@@ -2,6 +2,7 @@
 
 #include <usb/libusb++.hpp>
 #include <usb/descriptor.hpp>
+#include <usb/endpoint.hpp>
 
 namespace AVR::USB
 {
@@ -47,22 +48,21 @@ namespace AVR::USB
 				_bInterfaceClass,
 				_bInterfaceSubClass,
 				_bInterfaceProtocol,
-				// _InterfaceStr->idx(),
 				_iInterface
 			} 
 			{}
 
-		constexpr AVR::pgm_span<Endpoint*> getEndpointsPgm()
+		constexpr AVR::pgm_span<Endpoint*> getEndpointsPgm() const
 		{
 			return m_endpoints;
 		}
-		constexpr AVR::pgm_span<Endpoint*> getEndpointsPgmThisPgm()
+		constexpr AVR::pgm_span<Endpoint*> getEndpointsPgmThisPgm() const
 		{
 			auto endpoints = *pgm_ptr{&m_endpoints};
 			return endpoints;
 		}
 
-		constexpr Endpoint* getEndpoint(uint8_t idx)
+		constexpr Endpoint* getEndpoint(uint8_t idx) const
 		{
 			auto endpoints = getEndpointsPgm();
 			// AVR::pgm_ptr size{endpoints->size_p()};
@@ -71,7 +71,7 @@ namespace AVR::USB
 			AVR::pgm_ptr arr{endpoints.begin()};
 			return arr[idx];
 		}
-		constexpr Endpoint* getEndpointPgmThis(uint8_t idx)
+		constexpr Endpoint* getEndpointPgmThis(uint8_t idx) const
 		{
 			auto endpoints = getEndpointsPgmThisPgm();
 			// AVR::pgm_ptr size{endpoints->size_p()};
@@ -81,11 +81,11 @@ namespace AVR::USB
 			return arr[idx];
 		}
 
-		constexpr AVR::pgm_ptr<uint8_t> getDescriptorBufPgm() 
+		constexpr AVR::pgm_ptr<uint8_t> getDescriptorBufPgm() const
 		{
 			return AVR::pgm_ptr{m_descriptor.ptr()};
 		}
-		constexpr AVR::pgm_ptr<uint8_t> getDescriptorBufPgmThisPgm() 
+		constexpr AVR::pgm_ptr<uint8_t> getDescriptorBufPgmThisPgm() const
 		{
 			return m_descriptor.ptr_pgm();
 		}

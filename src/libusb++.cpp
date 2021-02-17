@@ -56,33 +56,23 @@ void USB::connect()
 void USB::init(USB::Endpoint0 *endpoint0)
 {
 	reset();
-	//required pins will now be set.
-	DDRB |= 0x03;
 	//Enable interrupts
-	USB::INT_CFG = USB::INT_CFG_SET;
-	USB::INT_ENABLE = USB::INT_ENABLE_MASK;
-	USB::INT_PENDING = USB::INT_PENDING_MASK;
+	USB::INT_CFG |= USB::INT_CFG_SET;
+	USB::INT_ENABLE |= USB::INT_ENABLE_MASK;
+	USB::INT_PENDING |= USB::INT_PENDING_MASK;
 
 	//clear global variables
-	usbDeviceAddr = 0;
 	usbNewDeviceAddr = 0;
+	usbDeviceAddr = 0;
 	usbCurrentTok = 0;
 	usbRxToken = 0;
 	usbRxLen = 0;
-	// usbTxLen = 0;
 	usbInputBufOffset = 0;
 	
+	EndpointsIn[0] = endpoint0;
+	EndpointsOut[0] = endpoint0;
+	usbTxLenBufs[0] = endpoint0->buf();
 
-	if(endpoint0){
-		EndpointsIn[0] = endpoint0;
-		EndpointsOut[0] = endpoint0;
-	}
-	else{
-		EndpointsIn[0] = &_endp0;
-		EndpointsOut[0] = &_endp0;
-	}
-
-	usbTxLenBufs[0] = EndpointsIn[0]->buf();
 	for(uint8_t i = 1; i < MAX_ENDPTS; i++){
 		usbTxLenBufs[i] = nullptr;
 		EndpointsIn[i] = nullptr;
@@ -98,8 +88,8 @@ void USB::reset()
 	AVR::Interrupt::InterruptHolder hold;
 	
 	disconnect();
-	uint8_t i = 0;
-	while(++i){
+	uint8_t i = 1;
+	while(i++){
 		_delay_ms(1);
 		AVR::Watchdog::reset();
 	}
@@ -109,26 +99,28 @@ void USB::reset()
 
 bool USB::ready()
 {
-	return _endp0.configurationSet();
+	return static_cast<Endpoint0*>(EndpointsIn[0])->configurationSet();
 }
 
 void __vector_transaction()
 {
+	using namespace USB;
+	
+	#if USE_HANDLER_LOCK
 	static bool locked = false;
 	{
-		AVR::Interrupt::InterruptHolder hold;
+		AVR::Interrupt::InterruptHolder<true> hold;
 		if(locked) return;
 		locked = true;
 	}
-	PORTB &= ~_BV(1);
-	PORTB |= _BV(1);
-	using namespace USB;
+	#endif
+
 	EndpointOut *endpt = EndpointsOut[usbEndptNoData];
 	if(endpt) {
 		PID rxToken = static_cast<PID>(usbRxToken);
-		uint8_t *buf = usbRxBuf + USB_BUF_LEN - usbInputBufOffset;
+		uint8_t *buf = &usbRxBuf[USB_BUF_LEN] - usbInputBufOffset;
 		bool setup = false;
-		if(usbRxLen)
+		if(usbRxLen){
 			switch (rxToken)
 			{
 			case PID::SETUP :
@@ -137,17 +129,20 @@ void __vector_transaction()
 			case PID::OUT :
 				endpt->out(buf, usbRxLen, setup);
 				break;
+			//something bad, so default to consuming data
 			default: usbRxLen = 0; break;
 			}
+		}
 	}
 	else{
+		//something bad, so default to consuming data
 		usbRxLen = 0;
 	}
+	#if USE_HANDLER_LOCK
 	locked = false;
+	#endif
 
 	//update endpoint TX Buffers
 	for(auto endptIn : EndpointsIn)
-		if(endptIn && !endptIn->txLen())endptIn->in();
-
-	PORTB &= ~_BV(1);
+		if(endptIn) endptIn->in();
 }

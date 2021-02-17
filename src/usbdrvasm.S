@@ -66,7 +66,9 @@ the file appropriate for the given clock rate.
     .global USB_INTR_VECTOR
     .type   USB_INTR_VECTOR, @function
     .global usbCrc16
+	.type 	usbCrc16, @function
     .global usbCrc16Append
+	.type	usbCrc16Append, @function
 #endif /* __IAR_SYSTEMS_ASM__ */
 
 
@@ -212,6 +214,7 @@ usbCrc16LoopTest:
 
 #else   /* USB_USE_FAST_CRC */
 
+
 ; This implementation is slower, but has less code size
 ;
 ; extern unsigned usbCrc16(unsigned char *argPtr, unsigned char argLen);
@@ -254,6 +257,8 @@ usbCrcReady:
 ; Thanks to Reimar Doeffinger for optimizing this CRC routine!
 
 #endif /* USB_USE_FAST_CRC */
+	.size usbCrc16, . - usbCrc16
+
 
 ; extern unsigned usbCrc16Append(unsigned char *data, unsigned char len);
 usbCrc16Append:
@@ -261,6 +266,7 @@ usbCrc16Append:
     st      ptr+, resCrcL
     st      ptr+, resCrcH
     ret
+	.size usbCrc16Append, . - usbCrc16Append
 
 #undef argLen
 #undef argPtrL
@@ -311,6 +317,7 @@ usbCrc16Append:
 ; extern unsigned usbMeasurePacketLength(void);
 ; returns time between two idle strobes in multiples of 7 CPU clocks
 .global usbMeasureFrameLength
+.type usbMeasureFrameLength, @function
 usbMeasureFrameLength:
     ldi     cntH, 6         ; wait ~ 10 ms for D- == 0
     clr     cnt16L
@@ -340,6 +347,7 @@ usbMFTimeout:
     mov     resH, cnt16H
 #endif
     ret
+.size usbMeasureFrameLength, . - usbMeasureFrameLength
 
 #undef resL
 #undef resH
@@ -353,6 +361,8 @@ usbMFTimeout:
 ;----------------------------------------------------------------------------
 ; Now include the clock rate specific code
 ;----------------------------------------------------------------------------
+
+usb_include_start:
 
 #ifndef USB_CFG_CLOCK_KHZ
 #   ifdef F_CPU
@@ -387,3 +397,5 @@ usbMFTimeout:
 #       error "USB_CFG_CLOCK_KHZ is not one of the supported rates!"
 #   endif
 #endif /* USB_CFG_CHECK_CRC */
+
+.size USB_INTR_VECTOR, . - usb_include_start

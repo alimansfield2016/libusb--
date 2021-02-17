@@ -39,8 +39,8 @@ namespace AVR::USB
 		bool m_configurationSet;
 	public:
 		Endpoint0(
-			const EndpointDescriptor *_descIn,
-			const EndpointDescriptor *_descOut
+			AVR::pgm_ptr<EndpointDescriptor> _descIn,
+			AVR::pgm_ptr<EndpointDescriptor> _descOut
 		) : 
 			EndpointInOut{_descIn, _descOut},
 			buf_ptr{nullptr},
@@ -67,6 +67,6 @@ namespace AVR::USB
 		void nextInterface();
 		void nextEndpoint();
 
-		void resetState() { state = State::DEFAULT; stateIdx = 0; }
+		void resetState() { state = State::DEFAULT; /* stateIdx = 0; */ }
 	};
 } // namespace AVR::USB

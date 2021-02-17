@@ -5,6 +5,9 @@
 #define MAX_ENDPTS 16
 #define USB_BUF_LEN 11
 
+#define USE_HANDLER_LOCK 1
+#define ALLOW_EPT0_SET 0
+
 extern "C"{
 	extern uint8_t usbDeviceAddr;
 	extern uint8_t usbNewDeviceAddr;
@@ -25,7 +28,6 @@ extern "C"{
 	 */
 	extern volatile uint8_t usbEndptNoData;
 	extern uint8_t *usbTxLenBufs[MAX_ENDPTS];
-	extern bool usbTransactionEnd;
 
 	extern void __vector_transaction() __attribute__((signal)) ;
 	extern void usbCrc16Append(uint8_t*, uint8_t);

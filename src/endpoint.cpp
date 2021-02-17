@@ -6,10 +6,10 @@
 
 using namespace AVR::USB;
 
-AVR::pgm_ptr<uint8_t> Endpoint::DescriptorBuf() const 
-{
-	return m_descriptor->ptr_pgm();
-}
+// AVR::pgm_ptr<uint8_t> Endpoint::DescriptorBuf() const 
+// {
+// 	return m_descriptor->ptr_pgm();
+// }
 
 void EndpointIn::genPacket(PID pid, uint8_t dataLen)
 {

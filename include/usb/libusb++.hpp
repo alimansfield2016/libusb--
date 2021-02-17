@@ -11,17 +11,20 @@ namespace AVR::USB
 	class Device;
 	//PROGMEM
 	extern AVR::pgm_ptr<AVR::USB::Device> pDevice;
+	extern AVR::USB::Endpoint0 _endp0;
 
 	/**Allows the user to provide a custom Endpoint Zero.
 	 * It must however inherit from Endpoint0 and use some of its 
 	 * built in functionality
 	 */	
-	void init(Endpoint0 *endpoint0 = nullptr);
+	void init(Endpoint0 *endpoint0 = &_endp0);
 	void reset();
 	bool ready();
 
 	void connect();
 	void disconnect();
+
+	extern "C" void __attribute__((signal, used)) __vector_3();
 
 	enum class PID : uint8_t
 	{

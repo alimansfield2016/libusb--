@@ -4,15 +4,22 @@
 
 #include "libusb++_ext.hpp"
 
-#include <avr/io/io.hpp>
-#include <avr/io/serial.hpp>
 #include <avr/memory/pgmspace.hpp>
+
+// #define DEBUG
+#ifdef DEBUG
+#include <avr/io/serial.hpp>
+#define DEBUG_CHAR(c) USART0.putc(c)
+#else
+#define DEBUG_CHAR(c)
+#endif
+#define DEBUG_WORD(w) DEBUG_CHAR((w>>8)); DEBUG_CHAR((w))
 
 using namespace AVR::USB;
 
 Endpoint0 AVR::USB::_endp0{
-	nullptr,
-	nullptr
+	AVR::pgm_ptr<AVR::USB::EndpointDescriptor>{nullptr},
+	AVR::pgm_ptr<AVR::USB::EndpointDescriptor>{nullptr}
 };
 
 
@@ -51,6 +58,8 @@ bool Endpoint0::setup(uint8_t *rxBuf, uint8_t &rxLen)
 	setDataPID(PID::DATA1);
 	if(m_reqType != RequestType::Standard)
 		return false;
+	//we have all the data we need right now!
+	//and we own this transaction
 	rxLen = 0;
 	switch (request)
 	{
@@ -59,8 +68,8 @@ bool Endpoint0::setup(uint8_t *rxBuf, uint8_t &rxLen)
 			switch (recipient)
 			{
 			case RequestRecipient::Device :
-				txBuf[0] = 0;
-				txBuf[1] = 0;
+				txBuf()[0] = 0;
+				txBuf()[1] = 0;
 				genPacket(getDataPID(), 2);
 				break;
 			
@@ -91,14 +100,12 @@ bool Endpoint0::out(uint8_t *rxBuf, uint8_t &rxLen, bool _setup)
 	if(_setup) 
 		return Endpoint0::setup(rxBuf, rxLen);
 
-	// rxLen = 0;
 	return false;
 }
 
 void Endpoint0::in()
 {
 	if(txLen()) return;
-
 	switch (state)
 	{
 	case State::DeviceDescriptor :
@@ -118,8 +125,9 @@ void Endpoint0::in()
 
 void Endpoint0::setDeviceAddr(uint8_t addr)
 {
-	resetState();
 	usbNewDeviceAddr = addr;
+	// usbDeviceAddr = addr;
+	resetState();
 	genPacket(getDataPID(), 0);
 }
 
@@ -127,7 +135,6 @@ void Endpoint0::setConfiguration(uint8_t config)
 {
 	//Configuration index starts at 1!
 	--config;
-	USART0.Print('C');
 	// resetState();
 
 	//setup relevant endpoints.
@@ -139,20 +146,34 @@ void Endpoint0::setConfiguration(uint8_t config)
 		while((p_endpoint = getEndpoint(p_interface, endptIdx++)))
 		{
 			uint8_t endptNo = p_endpoint->endpointNo();
+			//disallow overwriting endp0
+			//4 bytes/2 words (Os)
+			//6 bytes/3 words (O3)
+
+			#if !(ALLOW_EPT0_SET)
 			if(!endptNo) break;
+			#endif
+
 			if(p_endpoint->direction() == EndpointDirection::IN){
 				EndpointsIn[endptNo] = static_cast<EndpointIn*>(p_endpoint);
-				usbTxLenBufs[endptNo] = static_cast<EndpointIn*>(p_endpoint)->txLenBuf;
+				usbTxLenBufs[endptNo] = static_cast<EndpointIn*>(p_endpoint)->buf();
 			}else{
 				EndpointsOut[endptNo] = static_cast<EndpointOut*>(p_endpoint);
 			}
 		}
 	}
-	USART0.Print('c');
 	m_configurationSet = true;
 	genPacket(getDataPID(), 0);
-
 }
+
+/**
+ * Disable tail-call optimisation since there are 
+ * many call-return statements in this function. 
+ * This prevents multiple exit-points
+ */
+
+#pragma GCC push_options
+#pragma GCC optimize ("no-optimize-sibling-calls")
 
 void Endpoint0::getDescriptor(DescriptorType type, uint8_t idx)
 {
@@ -168,7 +189,8 @@ void Endpoint0::getDescriptor(DescriptorType type, uint8_t idx)
 		break;
 	case DescriptorType::Configuration :
 		state = State::ConfigurationDescriptor;
-		p_configuration = getConfiguration(pDevice);
+		p_configuration = getConfiguration(pDevice, idx);
+		// assume that this is ALWAYS valid
 		buf_ptr = getConfigurationDescriptorBuf(p_configuration);
 		pageOffset = ConfigurationDescriptor::s_size;
 		loadConfigurationDescriptor();
@@ -199,17 +221,18 @@ void Endpoint0::getDescriptor(DescriptorType type, uint8_t idx)
 	}
 }
 
+#pragma GCC pop_options
+
 void Endpoint0::loadDeviceDescriptor()
 {
 	
 	uint8_t i;
 	for(i = 0; (i < 8) && pageOffset && maxLength; i++, --maxLength, --pageOffset)
-		{
-			txBuf[i] = *buf_ptr++;
-		}
-	genPacket(getDataPID(), i);
+	{
+		txBuf()[i] = *buf_ptr++;
+	}
 	if(i < 8) resetState();
-	
+	genPacket(getDataPID(), i);
 }
 
 void Endpoint0::loadConfigurationDescriptor()
@@ -220,64 +243,49 @@ void Endpoint0::loadConfigurationDescriptor()
 	uint8_t i = 0;
 	do{
 		for(; i < 8 && pageOffset  && maxLength; i++, maxLength--, pageOffset--)
-			txBuf[i] = *buf_ptr++;
+			txBuf()[i] = *buf_ptr++;
 		if(!pageOffset || i!=8){
 			switch(stateIdx){
-				case 0:	//configuration descriptor
-					pageOffset = InterfaceDescriptor::s_size;
-					stateIdx++;
+				case 0:	//loaded configuration descriptor
+					//initial setup state
+					stateIdx = 1;
 					intfIdx = 0;
 					altIdx = 0;
+					[[fallthrough]];
+				case 1:	//load next interface descriptor
+					pageOffset = InterfaceDescriptor::s_size;
+					stateIdx=2;	// 2
 					nextInterface();
 					if(!p_interface){
+						//if we run out of interfaces
+						//we're done!
 						state = State::DEFAULT;
-						stateIdx = 0;
+						break;
 					}
+					//reset endpoint idx
+					endptIdx = 0;
 					buf_ptr = getInterfaceDescriptorBuf(p_interface);
 					break;
-				case 1:	//interface descriptor
-					pageOffset = EndpointDescriptor::s_size;
-					endptIdx = 0;
+				case 2:	//loaded endpoint/interface descriptor
+						//load next endpoint descriptor
 					nextEndpoint();
 					if(!p_endpoint){
-						nextInterface();
-						if(!p_interface){
-							stateIdx = 0;
-							state = State::DEFAULT;
-						}
-						buf_ptr = getInterfaceDescriptorBuf(p_interface);
-						pageOffset = InterfaceDescriptor::s_size;
-						break;
-					}
-					buf_ptr = getEndpointDescriptorBuf(p_endpoint);
-					stateIdx++;
-					break;;
-				case 2:	//Endpoint Descriptor
-					//Load next Endpoint Descriptor
-					nextEndpoint();
-					if(p_endpoint){
-						buf_ptr = getEndpointDescriptorBuf(p_endpoint);
+						//get the next interface
+						stateIdx = 1;
+					} else {
 						pageOffset = EndpointDescriptor::s_size;
-						break;
+						buf_ptr = p_endpoint->DescriptorBuf();
 					}
-					nextInterface();
-					if(p_interface){
-						buf_ptr = getInterfaceDescriptorBuf(p_interface);
-						pageOffset = InterfaceDescriptor::s_size;
-						stateIdx--;
-						break;
-					}
-					[[fallthrough]];
+					break;
 				default: //If all else fails
 					state = State::DEFAULT;
-					stateIdx = 0;
 					break;
 			}
 		}
 	}while(i < 8 && state != State::DEFAULT && maxLength && pageOffset);
 
-	genPacket(getDataPID(), i);
 	if(i < 8) resetState();
+	genPacket(getDataPID(), i);
 }
 
 void Endpoint0::loadStringDescriptor()
@@ -286,22 +294,23 @@ void Endpoint0::loadStringDescriptor()
 	switch (stateIdx)
 	{
 	case 0: //init
-
-		txBuf[0] = pageOffset+2;
-		txBuf[1] = static_cast<uint8_t>(DescriptorType::String);
-		stateIdx++;
+		//descriptor length (strlen+2)
+		//descriptor type (string)
+		txBuf()[0] = pageOffset+2;
+		txBuf()[1] = static_cast<uint8_t>(DescriptorType::String);
+		stateIdx=1;
 		i = 2;
 		maxLength-=2;
 		[[fallthrough]];	
 	case 1:
 		for(;i < 8 && pageOffset && maxLength; i++, pageOffset--, maxLength--)
-			txBuf[i] = *buf_ptr++;
-		// if(!pageOffset || !maxLength)
-		if(i == 8)
+			txBuf()[i] = *buf_ptr++;
+		if(i == 8)	//continue next time
 			break;
+		//otherwise, reset
 		[[fallthrough]];
 	default:
-		state = State::DEFAULT;
+		resetState();
 		break;
 	}
 	genPacket(getDataPID(), i);
@@ -309,21 +318,22 @@ void Endpoint0::loadStringDescriptor()
 
 void Endpoint0::nextInterface()
 {
-	p_interface = getInterface(p_configuration, intfIdx, altIdx++);
-	if(p_interface) return;
-	altIdx = 0;
-	intfIdx++;
-	p_interface = getInterface(p_configuration, intfIdx, altIdx++);
-	if(!p_interface){
-		intfIdx = 0;
+	p_interface = getInterface(p_configuration, intfIdx, altIdx);
+	if(!p_interface) {
 		altIdx = 0;
+		intfIdx++;
+		p_interface = getInterface(p_configuration, intfIdx, altIdx);
+		//we're starting to cut corners now! (not resetting intfIdx=0 if NULL)
+		//but technically we should be initialising 
+		//this stuff ourselves before use
 	}
+	//cutting corners here too (only inc if not NULL)
+	altIdx++;
 }
 void Endpoint0::nextEndpoint()
 {
-	Endpoint *p_ep;
-	p_ep = getEndpoint(p_interface, endptIdx++);
-	if(!p_ep)
-		endptIdx = 0;
-	p_endpoint = p_ep;
+	p_endpoint = getEndpoint(p_interface, endptIdx++);
+	//cutting corners again (not resetting endptIdx if NULL)
+	//but since this is my code, I can justify
+	//removing all the redundancy
 }
